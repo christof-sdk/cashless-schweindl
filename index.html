@@ -2,33 +2,462 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Cashless Schweindl</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #4ECDC4;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      color: #333;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Lato', sans-serif; background: #51e0bf; }
+
+    .screen { position: fixed; inset: 0; display: flex; flex-direction: column; }
+    .hidden { display: none !important; }
+
+    /* ── DASHBOARD ───────────────────────────── */
+    #s-dash { background: #EDE7D2; }
+
+    .dash-top {
+      background: #51e0bf;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px 16px 0;
+      position: relative; flex-shrink: 0;
     }
-    .placeholder {
-      text-align: center;
-      padding: 2rem;
+
+    .gear-btn {
+      position: absolute; top: 18px; right: 18px;
+      background: none; border: none; cursor: pointer;
+      width: 30px; height: 30px; opacity: 0.8;
     }
-    .pig { font-size: 5rem; }
-    h1 { font-size: 1.5rem; margin: 1rem 0 0.5rem; }
-    p { opacity: 0.7; margin: 0; }
+
+    .ring-wrap {
+      position: relative;
+      width: min(55vw, 210px); height: min(55vw, 210px);
+      margin: 8px 0; flex-shrink: 0;
+    }
+    .ring-wrap svg { width: 100%; height: 100%; }
+
+    .ring-text {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; pointer-events: none;
+    }
+    .ring-total  { font-size: clamp(20px, 8vw, 36px); font-weight: 700; color: rgba(39,39,39,0.8); line-height: 1.1; }
+    .ring-sub    { font-size: clamp(12px, 3.8vw, 18px); font-weight: 700; color: rgba(39,39,39,0.8); margin-top: 2px; }
+
+    .dash-jar-name {
+      font-size: clamp(20px, 6vw, 30px); font-weight: 700; color: #4f4f4f;
+      text-align: center; padding: 6px 16px 14px;
+    }
+
+    .wave { display: block; width: 100%; flex-shrink: 0; }
+
+    .dash-bottom {
+      flex: 1; background: #EDE7D2;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      display: flex; flex-direction: column;
+    }
+
+    .tx-list { flex: 1; padding: 16px 46px 0; }
+
+    .tx-item { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; }
+    .tx-date  { font-size: clamp(15px, 4.5vw, 20px); font-weight: 400; color: #6b6b6b; }
+    .tx-amt   { font-size: clamp(15px, 4.5vw, 20px); font-weight: 700; color: #000; }
+    .tx-amt.pending { opacity: 0.4; }
+    .tx-empty { color: #9b9b9b; text-align: center; padding: 28px 0; font-size: 17px; }
+
+    .einzahlen-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: #5e5e5e; border: 1px solid #4f4f4f; border-radius: 56px;
+      color: #f2f2f2; font-family: 'Lato', sans-serif;
+      font-size: clamp(16px, 4.5vw, 20px); font-weight: 700;
+      padding: 14px 24px; width: min(284px, 80%);
+      cursor: pointer; margin: 20px auto; flex-shrink: 0;
+      box-shadow: 0 4px 2px rgba(0,0,0,0.25);
+    }
+    .einzahlen-btn:active { transform: scale(0.97); }
+
+    /* ── PAYMENT ─────────────────────────────── */
+    #s-pay { background: #51e0bf; align-items: center; }
+
+    .pay-header {
+      display: flex; align-items: center;
+      width: 100%; padding: 20px 20px 8px; flex-shrink: 0;
+    }
+
+    .back-btn {
+      background: none; border: none; font-size: 32px; color: #333;
+      cursor: pointer; line-height: 1; padding: 2px 10px 2px 0;
+    }
+
+    .pay-name {
+      flex: 1; text-align: center;
+      font-size: clamp(18px, 5vw, 22px); font-weight: 700; color: #4f4f4f;
+      margin-right: 34px;
+    }
+
+    .pay-total {
+      font-size: clamp(26px, 7.5vw, 34px); font-weight: 700;
+      color: #333; margin-bottom: 4px; flex-shrink: 0;
+    }
+
+    .pig-img { width: min(44vw, 178px); flex-shrink: 0; }
+
+    .coins-wrap {
+      position: relative;
+      height: min(40vw, 160px);
+      flex-shrink: 0; margin: 6px 0;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+
+    .coin {
+      position: absolute; bottom: 0;
+      width: min(40vw, 160px); height: min(40vw, 160px);
+      transition: left 0.15s ease;
+    }
+
+    .amount-pill {
+      background: rgba(242,242,242,0.4); border-radius: 16px;
+      padding: 8px 28px;
+      font-size: clamp(26px, 9vw, 44px); font-weight: 700;
+      color: #444; flex-shrink: 0; margin: 4px 0;
+    }
+
+    .pay-controls {
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(24px, 8vw, 48px); margin-top: 16px; flex-shrink: 0;
+    }
+
+    .ctrl-img {
+      width: min(16vw, 64px); cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ctrl-img:active { transform: scale(0.9); }
+
+    .swipe-img {
+      width: min(20vw, 80px);
+      cursor: grab; touch-action: none; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      will-change: transform;
+    }
   </style>
 </head>
 <body>
-  <div class="placeholder">
-    <div class="pig">🐷</div>
-    <h1>Cashless Schweindl</h1>
-    <p>Coming soon</p>
+
+<!-- ── DASHBOARD ──────────────────────────────────── -->
+<div id="s-dash" class="screen hidden">
+  <div class="dash-top">
+    <button class="gear-btn" title="Einstellungen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#4f4f4f" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+                 a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+                 A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
+                 l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                 A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
+                 l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+                 a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
+                 l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+                 a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+
+    <div class="ring-wrap">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- 270° background arc, gap at bottom -->
+        <path d="M 43.43 156.57 A 80 80 0 1 1 156.57 156.57"
+              fill="none" stroke="rgba(255,255,255,0.3)"
+              stroke-width="14" stroke-linecap="round"/>
+        <!-- Progress arc -->
+        <path id="ring-arc"
+              d="M 43.43 156.57 A 80 80 0 1 1 156.57 156.57"
+              fill="none" stroke="#3a3a3a"
+              stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="377 377" stroke-dashoffset="377"/>
+      </svg>
+      <div class="ring-text">
+        <span class="ring-total" id="ring-total">€ 0</span>
+        <span class="ring-sub"   id="ring-sub">von € 0</span>
+      </div>
+    </div>
+
+    <p class="dash-jar-name" id="dash-name">…</p>
   </div>
+
+  <!-- Wave between teal and cream -->
+  <svg class="wave" viewBox="0 0 402 40" preserveAspectRatio="none"
+       height="40" style="background:#51e0bf">
+    <path d="M0,40 Q201,0 402,40 L402,40 L0,40 Z" fill="#EDE7D2"/>
+  </svg>
+
+  <div class="dash-bottom">
+    <div class="tx-list" id="tx-list"></div>
+    <button class="einzahlen-btn" id="einzahlen-btn">🐷&nbsp; EINZAHLEN</button>
+  </div>
+</div>
+
+<!-- ── PAYMENT SCREEN ────────────────────────────── -->
+<div id="s-pay" class="screen hidden">
+  <div class="pay-header">
+    <button class="back-btn" id="back-btn">‹</button>
+    <span class="pay-name" id="pay-name">…</span>
+  </div>
+
+  <span class="pay-total" id="pay-total">0,00 €</span>
+
+  <!-- Pig illustration from Figma (7-day URL — replace with permanent asset) -->
+  <img class="pig-img"
+       src="https://www.figma.com/api/mcp/asset/a99b58e8-ab27-4d55-b7e5-5fbafa884f6f"
+       alt="Sparschwein">
+
+  <div class="coins-wrap" id="coins-wrap"></div>
+
+  <div class="amount-pill" id="amount-pill">+ 1,00 €</div>
+
+  <div class="pay-controls">
+    <!-- Minus, swipe handle, plus — Figma assets (7-day URLs) -->
+    <img class="ctrl-img" id="minus-btn"
+         src="https://www.figma.com/api/mcp/asset/52d434c0-9ca6-4c77-aa1e-555bba260cdb"
+         alt="Weniger">
+    <img class="swipe-img" id="swipe-btn"
+         src="https://www.figma.com/api/mcp/asset/b25882eb-3781-47df-8367-d82d6853b0ec"
+         alt="Einzahlen — nach oben wischen">
+    <img class="ctrl-img" id="plus-btn"
+         src="https://www.figma.com/api/mcp/asset/4c8a0501-94a4-4107-97bc-e054e931cf13"
+         alt="Mehr">
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
+<script>
+// ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
+// Ersetze diese Werte mit deinem Firebase-Projekt (Projekteinstellungen → Web-App)
+const FIREBASE_CONFIG = {
+  apiKey:            "REPLACE_WITH_API_KEY",
+  authDomain:        "REPLACE_WITH_PROJECT_ID.firebaseapp.com",
+  databaseURL:       "https://REPLACE_WITH_PROJECT_ID-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "REPLACE_WITH_PROJECT_ID",
+  storageBucket:     "REPLACE_WITH_PROJECT_ID.appspot.com",
+  messagingSenderId: "REPLACE_WITH_SENDER_ID",
+  appId:             "REPLACE_WITH_APP_ID"
+};
+
+// ── DEMO DATA (aktiv solange Firebase nicht konfiguriert) ─────────────────────
+const DEMO_JAR = {
+  name: 'Running Sushi',
+  goal: 150,
+  total: 75,
+  taps: {
+    a: { amount: 2, timestamp: Date.now() - 3.6e6,    status: 'confirmed' },
+    b: { amount: 1, timestamp: Date.now() - 7.2e6,    status: 'confirmed' },
+    c: { amount: 4, timestamp: Date.now() - 97.2e6,   status: 'confirmed' },
+    d: { amount: 1, timestamp: Date.now() - 345.6e6,  status: 'confirmed' },
+    e: { amount: 1, timestamp: Date.now() - 604.8e6,  status: 'confirmed' },
+    f: { amount: 1, timestamp: Date.now() - 950.4e6,  status: 'confirmed' },
+    g: { amount: 1, timestamp: Date.now() - 1641.6e6, status: 'confirmed' },
+  }
+};
+
+const DEMO_MODE = FIREBASE_CONFIG.apiKey.startsWith('REPLACE');
+let db = null;
+if (!DEMO_MODE) {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+}
+
+// ── ROUTING ───────────────────────────────────────────────────────────────────
+const m = window.location.pathname.match(/^\/(?:[^/]+\/)*jar\/([^/]+)(\/pay)?$/);
+const jarId  = m ? m[1] : 'demo';
+const screen = m && m[2] === '/pay' ? 'pay' : 'dash';
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const fmtEur = n => `€ ${n},00`;
+
+function fmtDate(ts) {
+  const d = new Date(ts), now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const day   = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff  = Math.round((today - day) / 86400000);
+  if (diff === 0) return 'Heute';
+  if (diff === 1) return 'Gestern';
+  if (diff < 7)   return `Vor ${diff} Tagen`;
+  return d.toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// ── PROGRESS RING ─────────────────────────────────────────────────────────────
+// Arc: 270° (gap at bottom), radius 80 → length = 2π × 80 × 0.75 ≈ 377
+const ARC_LEN = 377;
+
+function setRing(total, goal) {
+  const p = goal > 0 ? Math.min(total / goal, 1) : 0;
+  document.getElementById('ring-arc').style.strokeDashoffset = ARC_LEN * (1 - p);
+  document.getElementById('ring-total').textContent = fmtEur(total);
+  document.getElementById('ring-sub').textContent   = `von ${fmtEur(goal)}`;
+}
+
+// ── TRANSACTION LIST ──────────────────────────────────────────────────────────
+function renderTx(taps) {
+  const el = document.getElementById('tx-list');
+  const list = taps ? Object.values(taps) : [];
+  if (!list.length) {
+    el.innerHTML = '<p class="tx-empty">Noch keine Einzahlungen</p>';
+    return;
+  }
+  el.innerHTML = list
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .map(t => `
+      <div class="tx-item">
+        <span class="tx-date">${fmtDate(t.timestamp)}</span>
+        <span class="tx-amt${t.status === 'pending' ? ' pending' : ''}">${fmtEur(t.amount)}</span>
+      </div>`)
+    .join('');
+}
+
+// ── COIN DISPLAY ──────────────────────────────────────────────────────────────
+const COIN_SRC = 'https://www.figma.com/api/mcp/asset/0c8d66cf-6990-419c-ba2f-2d3fbe5bb02c';
+
+function renderCoins(amount) {
+  const wrap  = document.getElementById('coins-wrap');
+  const count = Math.min(amount, 5);
+  const size  = Math.min(window.innerWidth * 0.4, 160);
+  const step  = Math.min(window.innerWidth * 0.075, 30);
+  const total = size + (count - 1) * step;
+
+  wrap.style.width = total + 'px';
+  wrap.innerHTML   = '';
+
+  for (let i = 0; i < count; i++) {
+    const img = document.createElement('img');
+    img.src = COIN_SRC;
+    img.className = 'coin';
+    img.style.left = (i * step) + 'px';
+    img.style.zIndex = i + 1;
+    wrap.appendChild(img);
+  }
+}
+
+// ── PAYMENT AMOUNT ────────────────────────────────────────────────────────────
+let tapAmount = 1;
+
+function setTapAmount(n) {
+  tapAmount = Math.max(1, Math.min(n, 20));
+  document.getElementById('amount-pill').textContent = `+ ${tapAmount},00 €`;
+  renderCoins(tapAmount);
+}
+
+// ── SWIPE GESTURE ─────────────────────────────────────────────────────────────
+function initSwipe() {
+  const el = document.getElementById('swipe-btn');
+  let startY = 0, dragging = false, delta = 0;
+  const THRESHOLD = 80;
+
+  function onStart(y) { startY = y; dragging = true; delta = 0; el.style.transition = 'none'; }
+  function onMove(y) {
+    if (!dragging) return;
+    delta = Math.min(0, y - startY); // negative = upward
+    el.style.transform = `translateY(${Math.max(delta, -120)}px)`;
+  }
+  async function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    if (Math.abs(delta) >= THRESHOLD) {
+      el.style.transition = 'transform 0.15s';
+      el.style.transform  = 'translateY(-130px)';
+      await doTap();
+    } else {
+      el.style.transition = 'transform 0.3s ease';
+      el.style.transform  = 'translateY(0)';
+    }
+  }
+
+  el.addEventListener('touchstart', e => { e.preventDefault(); onStart(e.touches[0].clientY); }, { passive: false });
+  el.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientY); },  { passive: false });
+  el.addEventListener('touchend',   e => { e.preventDefault(); onEnd(); },                         { passive: false });
+  el.addEventListener('mousedown',  e => onStart(e.clientY));
+  window.addEventListener('mousemove', e => { if (dragging) onMove(e.clientY); });
+  window.addEventListener('mouseup',   ()  => { if (dragging) onEnd(); });
+}
+
+async function doTap() {
+  const tap = { amount: tapAmount, timestamp: Date.now(), status: 'confirmed' };
+
+  if (!DEMO_MODE) {
+    try {
+      const ref = db.ref(`jars/${jarId}`);
+      await db.ref(`jars/${jarId}/taps`).push(tap);
+      const snap = await ref.child('total').once('value');
+      await ref.child('total').set((snap.val() || 0) + tapAmount);
+    } catch (e) {
+      console.error('Firebase Fehler:', e);
+    }
+  }
+
+  // Kurzes visuelles Feedback
+  const s = document.getElementById('s-pay');
+  s.style.transition = 'background 0.2s';
+  s.style.background = '#2ec4a0';
+  await new Promise(r => setTimeout(r, 500));
+  location.href = `/jar/${jarId}`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+
+  async function loadJar() {
+    if (DEMO_MODE || jarId === 'demo') return DEMO_JAR;
+    const snap = await db.ref(`jars/${jarId}`).once('value');
+    return snap.val();
+  }
+
+  if (screen === 'dash') {
+    document.getElementById('einzahlen-btn').onclick = () => { location.href = `/jar/${jarId}/pay`; };
+
+    if (DEMO_MODE || jarId === 'demo') {
+      document.getElementById('dash-name').textContent = DEMO_JAR.name;
+      setRing(DEMO_JAR.total, DEMO_JAR.goal);
+      renderTx(DEMO_JAR.taps);
+      document.getElementById('s-dash').classList.remove('hidden');
+    } else {
+      db.ref(`jars/${jarId}`).on('value', snap => {
+        const data = snap.val();
+        if (!data) {
+          document.body.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:center;height:100vh;
+                        background:#51e0bf;color:#333;font-family:Lato,sans-serif;
+                        font-size:18px;padding:40px;text-align:center">
+              Sparschwein nicht gefunden.
+            </div>`;
+          return;
+        }
+        document.getElementById('dash-name').textContent = data.name;
+        setRing(data.total || 0, data.goal || 150);
+        renderTx(data.taps || {});
+        document.getElementById('s-dash').classList.remove('hidden');
+      });
+    }
+
+  } else {
+    // Payment screen
+    document.getElementById('back-btn').onclick  = () => { location.href = `/jar/${jarId}`; };
+    document.getElementById('minus-btn').onclick = () => setTapAmount(tapAmount - 1);
+    document.getElementById('plus-btn').onclick  = () => setTapAmount(tapAmount + 1);
+
+    const jar = await loadJar();
+    if (jar) {
+      document.getElementById('pay-name').textContent  = jar.name  || '…';
+      document.getElementById('pay-total').textContent = `${jar.total || 0},00 €`;
+    }
+    setTapAmount(1);
+    initSwipe();
+    document.getElementById('s-pay').classList.remove('hidden');
+  }
+}
+
+init();
+</script>
 </body>
 </html>

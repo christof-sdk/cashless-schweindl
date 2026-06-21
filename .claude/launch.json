@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cashless-schweindl",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3001", "/Users/christof/Claude-Code/cashless-schweindl"],
+      "port": 3001
+    }
+  ]
+}
