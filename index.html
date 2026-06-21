@@ -134,11 +134,58 @@
     }
     .ctrl-img:active { transform: scale(0.9); }
 
-    .swipe-img {
-      width: min(20vw, 80px);
-      cursor: grab; touch-action: none; user-select: none;
+    /* Swipe-to-pay pill */
+    .swipe-pill {
+      width: min(18vw, 70px);
+      height: min(48vw, 190px);
+      background: #2a2a2a;
+      border-radius: 999px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 14px;
+      flex-shrink: 0;
+      touch-action: none;
+      user-select: none;
+      cursor: grab;
       -webkit-tap-highlight-color: transparent;
-      will-change: transform;
+    }
+
+    .swipe-chevrons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      pointer-events: none;
+    }
+
+    .chev {
+      width: min(5vw, 20px);
+      height: min(3vw, 12px);
+      animation: chev-pulse 1.4s ease-in-out infinite;
+    }
+    .chev:nth-child(1) { animation-delay: 0.4s; }
+    .chev:nth-child(2) { animation-delay: 0.2s; }
+    .chev:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes chev-pulse {
+      0%, 100% { opacity: 0.15; transform: translateY(3px); }
+      50%       { opacity: 0.85; transform: translateY(-3px); }
+    }
+
+    .swipe-thumb {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(14vw, 54px);
+      height: min(14vw, 54px);
+      background: #f0f0f0;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      pointer-events: none;
     }
   </style>
 </head>
@@ -214,7 +261,22 @@
 
   <div class="pay-controls">
     <img class="ctrl-img" id="minus-btn" src="/assets/minus.png" alt="Weniger">
-    <img class="swipe-img" id="swipe-btn" src="/assets/swipe.png" alt="Einzahlen — nach oben wischen">
+
+    <div class="swipe-pill" id="swipe-pill">
+      <div class="swipe-chevrons">
+        <svg class="chev" viewBox="0 0 20 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 10 L10 2 L18 10" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg class="chev" viewBox="0 0 20 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 10 L10 2 L18 10" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg class="chev" viewBox="0 0 20 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 10 L10 2 L18 10" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="swipe-thumb" id="swipe-thumb"></div>
+    </div>
+
     <img class="ctrl-img" id="plus-btn" src="/assets/plus.png" alt="Mehr">
   </div>
 </div>
@@ -341,33 +403,54 @@ function setTapAmount(n) {
 
 // ── SWIPE GESTURE ─────────────────────────────────────────────────────────────
 function initSwipe() {
-  const el = document.getElementById('swipe-btn');
-  let startY = 0, dragging = false, delta = 0;
-  const THRESHOLD = 80;
+  const pill  = document.getElementById('swipe-pill');
+  const thumb = document.getElementById('swipe-thumb');
 
-  function onStart(y) { startY = y; dragging = true; delta = 0; el.style.transition = 'none'; }
+  // Derive travel distance from actual rendered sizes
+  function maxTravel() {
+    const thumbH = thumb.offsetHeight || 54;
+    return pill.offsetHeight - thumbH - 16; // 8px padding top + bottom
+  }
+
+  let startY = 0, currentY = 0, dragging = false;
+
+  function onStart(y) {
+    startY   = y;
+    currentY = y;
+    dragging = true;
+    thumb.style.transition = 'none';
+    pill.style.cursor = 'grabbing';
+  }
+
   function onMove(y) {
     if (!dragging) return;
-    delta = Math.min(0, y - startY); // negative = upward
-    el.style.transform = `translateY(${Math.max(delta, -120)}px)`;
+    currentY = y;
+    const travel = Math.max(0, Math.min(startY - y, maxTravel()));
+    thumb.style.bottom = (8 + travel) + 'px';
   }
+
   async function onEnd() {
     if (!dragging) return;
     dragging = false;
-    if (Math.abs(delta) >= THRESHOLD) {
-      el.style.transition = 'transform 0.15s';
-      el.style.transform  = 'translateY(-130px)';
+    pill.style.cursor = 'grab';
+    const travel = Math.max(0, Math.min(startY - currentY, maxTravel()));
+    const THRESHOLD = maxTravel() * 0.75;
+
+    if (travel >= THRESHOLD) {
+      thumb.style.transition = 'bottom 0.12s ease';
+      thumb.style.bottom = (8 + maxTravel()) + 'px';
+      await new Promise(r => setTimeout(r, 180));
       await doTap();
     } else {
-      el.style.transition = 'transform 0.3s ease';
-      el.style.transform  = 'translateY(0)';
+      thumb.style.transition = 'bottom 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+      thumb.style.bottom = '8px';
     }
   }
 
-  el.addEventListener('touchstart', e => { e.preventDefault(); onStart(e.touches[0].clientY); }, { passive: false });
-  el.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientY); },  { passive: false });
-  el.addEventListener('touchend',   e => { e.preventDefault(); onEnd(); },                         { passive: false });
-  el.addEventListener('mousedown',  e => onStart(e.clientY));
+  pill.addEventListener('touchstart', e => { e.preventDefault(); onStart(e.touches[0].clientY); }, { passive: false });
+  pill.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientY); },  { passive: false });
+  pill.addEventListener('touchend',   e => { e.preventDefault(); onEnd(); },                         { passive: false });
+  pill.addEventListener('mousedown',  e => onStart(e.clientY));
   window.addEventListener('mousemove', e => { if (dragging) onMove(e.clientY); });
   window.addEventListener('mouseup',   ()  => { if (dragging) onEnd(); });
 }
