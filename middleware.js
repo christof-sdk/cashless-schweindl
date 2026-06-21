@@ -9,7 +9,7 @@ export default function middleware(request) {
       const decoded = atob(encoded);
       const [, password] = decoded.split(":");
       if (password === process.env.PREVIEW_PASSWORD) {
-        return new Response(null, { status: 200 });
+        return;
       }
     }
   }
