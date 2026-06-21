@@ -337,12 +337,15 @@ const fmtEur = n => `€ ${n},00`;
 
 function fmtDate(ts) {
   const d = new Date(ts), now = new Date();
+  const mins = Math.floor((now - d) / 60000);
+  if (mins < 1)   return 'vor < 1 Minute';
+  if (mins < 60)  return `vor ${mins} Minute${mins === 1 ? '' : 'n'}`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 12) return `vor ${hours} Stunde${hours === 1 ? '' : 'n'}`;
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const day   = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const diff  = Math.round((today - day) / 86400000);
-  if (diff === 0) return 'Heute';
-  if (diff === 1) return 'Gestern';
-  if (diff < 7)   return `Vor ${diff} Tagen`;
+  if (diff === 0) return 'heute';
   return d.toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
