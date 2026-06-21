@@ -206,26 +206,16 @@
 
   <span class="pay-total" id="pay-total">0,00 €</span>
 
-  <!-- Pig illustration from Figma (7-day URL — replace with permanent asset) -->
-  <img class="pig-img"
-       src="https://www.figma.com/api/mcp/asset/a99b58e8-ab27-4d55-b7e5-5fbafa884f6f"
-       alt="Sparschwein">
+  <img class="pig-img" src="/assets/pig.png" alt="Sparschwein">
 
   <div class="coins-wrap" id="coins-wrap"></div>
 
   <div class="amount-pill" id="amount-pill">+ 1,00 €</div>
 
   <div class="pay-controls">
-    <!-- Minus, swipe handle, plus — Figma assets (7-day URLs) -->
-    <img class="ctrl-img" id="minus-btn"
-         src="https://www.figma.com/api/mcp/asset/52d434c0-9ca6-4c77-aa1e-555bba260cdb"
-         alt="Weniger">
-    <img class="swipe-img" id="swipe-btn"
-         src="https://www.figma.com/api/mcp/asset/b25882eb-3781-47df-8367-d82d6853b0ec"
-         alt="Einzahlen — nach oben wischen">
-    <img class="ctrl-img" id="plus-btn"
-         src="https://www.figma.com/api/mcp/asset/4c8a0501-94a4-4107-97bc-e054e931cf13"
-         alt="Mehr">
+    <img class="ctrl-img" id="minus-btn" src="/assets/minus.png" alt="Weniger">
+    <img class="swipe-img" id="swipe-btn" src="/assets/swipe.png" alt="Einzahlen — nach oben wischen">
+    <img class="ctrl-img" id="plus-btn" src="/assets/plus.png" alt="Mehr">
   </div>
 </div>
 
@@ -318,7 +308,7 @@ function renderTx(taps) {
 }
 
 // ── COIN DISPLAY ──────────────────────────────────────────────────────────────
-const COIN_SRC = 'https://www.figma.com/api/mcp/asset/0c8d66cf-6990-419c-ba2f-2d3fbe5bb02c';
+const COIN_SRC = '/assets/coin.png';
 
 function renderCoins(amount) {
   const wrap  = document.getElementById('coins-wrap');

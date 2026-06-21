@@ -1,0 +1,24 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 88 203" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Button" filter="url(#filter0_d_0_9)">
+<rect x="4" width="80" height="195" rx="40" fill="var(--fill-0, #333333)" shape-rendering="crispEdges"/>
+<rect x="4.5" y="0.5" width="79" height="194" rx="39.5" stroke="var(--stroke-0, #4F4F4F)" shape-rendering="crispEdges"/>
+<g id="Arrow-Double-Up-1 Streamline Streamline-3.0">
+<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="M56.7745 40.7392L43.4902 32.2851L30.2098 40.7392C28.855 41.6004 26.7344 40.9017 26.7344 39.5915V34.6942C26.7578 34.2228 26.9006 33.7651 27.1493 33.364C27.398 32.9629 27.7445 32.6315 28.1562 32.4009L42.1109 23.5264C42.5285 23.279 43.0048 23.1484 43.4902 23.1484C43.9755 23.1484 44.4519 23.279 44.8694 23.5264L58.8281 32.4009C59.2399 32.6315 59.5864 32.9629 59.8351 33.364C60.0838 33.7651 60.2266 34.2228 60.25 34.6942V39.5915C60.25 40.9017 58.1294 41.6004 56.7745 40.7392Z" stroke="var(--stroke-0, white)" stroke-opacity="0.7" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" fill-rule="evenodd" clip-rule="evenodd" d="M56.7745 57.8077L43.4922 49.3536L30.2098 57.8077C28.855 58.6689 26.7344 57.9702 26.7344 56.662V53.0647C26.7576 52.5933 26.9003 52.1355 27.149 51.7343C27.3977 51.3332 27.7443 51.0018 28.1562 50.7714L42.1048 41.8948C42.5227 41.6485 42.999 41.5186 43.4841 41.5186C43.9692 41.5186 44.4454 41.6485 44.8633 41.8948L58.8119 50.7714C59.2238 51.0018 59.5704 51.3332 59.8191 51.7343C60.0678 52.1355 60.2105 52.5933 60.2337 53.0647V56.662C60.25 57.9702 58.1294 58.6689 56.7745 57.8077Z" stroke="var(--stroke-0, white)" stroke-opacity="0.7" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M58.7266 68.8516L43.4922 58.1875L28.2578 68.8516" stroke="var(--stroke-0, white)" stroke-opacity="0.7" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<circle id="Ellipse 4" cx="44" cy="154.5" r="28.5" fill="var(--fill-0, #FBFFE3)"/>
+</g>
+<defs>
+<filter id="filter0_d_0_9" x="0" y="0" width="88" height="203" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="2"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_9"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_9" result="shape"/>
+</filter>
+</defs>
+</svg>
