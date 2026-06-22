@@ -490,7 +490,7 @@ async function doTap() {
 async function init() {
 
   async function loadJar() {
-    if (DEMO_MODE || jarId === 'demo') return DEMO_JAR;
+    if (DEMO_MODE) return DEMO_JAR;
     const snap = await db.ref(`jars/${jarId}`).once('value');
     return snap.val();
   }
@@ -498,7 +498,7 @@ async function init() {
   if (screen === 'dash') {
     document.getElementById('einzahlen-btn').onclick = () => { location.href = `/jar/${jarId}/pay`; };
 
-    if (DEMO_MODE || jarId === 'demo') {
+    if (DEMO_MODE) {
       document.getElementById('dash-name').textContent = DEMO_JAR.name;
       setRing(DEMO_JAR.total, DEMO_JAR.goal);
       renderTx(DEMO_JAR.taps);
