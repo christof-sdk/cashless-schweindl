@@ -555,16 +555,18 @@ async function doTap() {
         coin.style.animationDelay = `${i * 25}ms`;
         coin.classList.add('vanish');
       });
-      // Sparkles und Schwein-Wackeln starten gleichzeitig
+      // Sparkles einblenden, Schwein-Wackeln startet 0.3s danach
       setTimeout(() => {
         spawnSparkles(wrap, centerLeft, coinSize);
-        document.querySelector('.pig-img').classList.add('pig-wiggle');
+        setTimeout(() => {
+          document.querySelector('.pig-img').classList.add('pig-wiggle');
+        }, 300);
       }, 400);
     }, 200);
   }, 300);
 
-  // Gesamtdauer der Sequenz abwarten (Schwein startet bei 900ms, wackelt 1000ms = 1900ms)
-  await new Promise(r => setTimeout(r, 1900));
+  // Gesamtdauer der Sequenz abwarten (Schwein startet bei 1200ms, wackelt 1000ms = 2200ms)
+  await new Promise(r => setTimeout(r, 2200));
 
   location.href = `/jar/${jarId}`;
 }
