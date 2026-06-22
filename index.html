@@ -555,17 +555,16 @@ async function doTap() {
         coin.style.animationDelay = `${i * 25}ms`;
         coin.classList.add('vanish');
       });
-      setTimeout(() => spawnSparkles(wrap, centerLeft, coinSize), 400);
+      // Sparkles und Schwein-Wackeln starten gleichzeitig
+      setTimeout(() => {
+        spawnSparkles(wrap, centerLeft, coinSize);
+        document.querySelector('.pig-img').classList.add('pig-wiggle');
+      }, 400);
     }, 200);
   }, 300);
 
-  // Schwein wackelt 0.3s nach den Münzen (0.6s nach Tap-Start)
-  setTimeout(() => {
-    document.querySelector('.pig-img').classList.add('pig-wiggle');
-  }, 600);
-
-  // Gesamtdauer der Sequenz abwarten (Münzen+Glitzer dauern am längsten: 300+200+400+800)
-  await new Promise(r => setTimeout(r, 1700));
+  // Gesamtdauer der Sequenz abwarten (Schwein startet bei 900ms, wackelt 1000ms = 1900ms)
+  await new Promise(r => setTimeout(r, 1900));
 
   location.href = `/jar/${jarId}`;
 }
