@@ -58,7 +58,7 @@
       display: flex; flex-direction: column;
     }
 
-    .tx-list { flex: 1; padding: 16px 46px 0; }
+    .tx-list { flex: 1; padding: 16px 46px 96px; }
 
     .tx-item { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; }
     .tx-date  { font-size: clamp(15px, 4.5vw, 20px); font-weight: 400; color: #6b6b6b; }
@@ -74,17 +74,24 @@
       text-decoration: underline; cursor: pointer;
     }
 
+    .tx-delete {
+      display: block; margin: 4px auto 4px;
+      background: none; border: none;
+      color: #b35c4a; font-family: 'Lato', sans-serif;
+      font-size: clamp(14px, 4vw, 17px); font-weight: 700;
+      text-decoration: underline; cursor: pointer;
+    }
+
     .einzahlen-btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       background: #5e5e5e; border: 1px solid #4f4f4f; border-radius: 56px;
       color: #f2f2f2; font-family: 'Lato', sans-serif;
       font-size: clamp(16px, 4.5vw, 20px); font-weight: 700;
       padding: 14px 24px; width: min(284px, 80%);
-      cursor: pointer; margin: 20px auto; flex-shrink: 0;
-      box-shadow: 0 4px 2px rgba(0,0,0,0.25);
-      position: sticky; bottom: 12px;
+      cursor: pointer; box-shadow: 0 4px 2px rgba(0,0,0,0.25);
+      position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
     }
-    .einzahlen-btn:active { transform: scale(0.97); }
+    .einzahlen-btn:active { transform: translateX(-50%) scale(0.97); }
 
     /* ── PAYMENT ─────────────────────────────── */
     #s-pay { background: #51e0bf; align-items: center; }
@@ -302,8 +309,9 @@
 
   <div class="dash-bottom">
     <div class="tx-list" id="tx-list"></div>
-    <button class="einzahlen-btn" id="einzahlen-btn">🐷&nbsp; EINZAHLEN</button>
   </div>
+
+  <button class="einzahlen-btn" id="einzahlen-btn">🐷&nbsp; EINZAHLEN</button>
 </div>
 
 <!-- ── PAYMENT SCREEN ────────────────────────────── -->
@@ -452,12 +460,31 @@ function renderTxList() {
   const toggleHtml = txList.length > TX_PAGE_SIZE
     ? `<button class="tx-toggle" id="tx-toggle">${txExpanded ? 'Weniger anzeigen' : 'Ältere anzeigen'}</button>`
     : '';
-  el.innerHTML = itemsHtml + toggleHtml;
+  const deleteHtml = txExpanded
+    ? `<button class="tx-delete" id="tx-delete">Einträge löschen</button>`
+    : '';
+  el.innerHTML = itemsHtml + toggleHtml + deleteHtml;
   if (txList.length > TX_PAGE_SIZE) {
     document.getElementById('tx-toggle').onclick = () => {
       txExpanded = !txExpanded;
       renderTxList();
     };
+  }
+  if (txExpanded) {
+    document.getElementById('tx-delete').onclick = clearTaps;
+  }
+}
+
+async function clearTaps() {
+  const confirmed = confirm('Möchten Sie wirklich alle Einträge löschen? Das Geld bleibt dabei natürlich am Sparschwein.');
+  if (!confirmed) return;
+
+  if (!DEMO_MODE) {
+    await db.ref(`jars/${jarId}/taps`).remove();
+  } else {
+    txList = [];
+    txExpanded = false;
+    renderTxList();
   }
 }
 
