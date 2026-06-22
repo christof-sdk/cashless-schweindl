@@ -213,6 +213,20 @@
       100% { transform: scale(0.3);  opacity: 0; filter: brightness(2)   drop-shadow(0 0 20px rgba(255,255,255,0.9)); }
     }
 
+    .sparkle {
+      position: absolute;
+      width: 18px; height: 18px;
+      pointer-events: none;
+      opacity: 0;
+      animation: sparkle-fade 0.8s ease-out forwards;
+    }
+    @keyframes sparkle-fade {
+      0%    { opacity: 0; transform: scale(0.5) rotate(0deg); }
+      10%   { opacity: 1; transform: scale(1)   rotate(8deg); }
+      37.5% { opacity: 1; transform: scale(1)   rotate(8deg); }
+      100%  { opacity: 0; transform: scale(1.4) rotate(20deg); }
+    }
+
     .pig-img.pig-wiggle {
       animation: pig-wiggle 1s ease-in-out;
       transform-origin: 50% 100%;
@@ -487,6 +501,7 @@ function initSwipe() {
     const THRESHOLD = maxTravel() * 0.75;
 
     if (travel >= THRESHOLD) {
+      document.getElementById('thumb-check').classList.add('draw');
       thumb.style.transition = 'bottom 0.12s ease';
       thumb.style.bottom = (8 + maxTravel()) + 'px';
       await new Promise(r => setTimeout(r, 180));
@@ -524,14 +539,13 @@ async function doTap() {
   s.style.transition = 'background 0.2s';
   s.style.background = '#2ec4a0';
 
-  // 1) Häkchen im Slider-Thumb wird sofort gezeichnet
-  document.getElementById('thumb-check').classList.add('draw');
-
-  // 2) Münzen 0.3s später: erst zu einem Stapel zusammenfahren, dann verschwinden
+  // Münzen 0.3s nach Tap-Beginn: erst zu einem Stapel zusammenfahren, dann verschwinden,
+  // danach kurz Glitzer-Sternchen an der Stelle des Stapels
   setTimeout(() => {
     const wrap  = document.getElementById('coins-wrap');
     const coins = wrap.querySelectorAll('.coin');
-    const centerLeft = (wrap.offsetWidth - (coins[0]?.offsetWidth || 0)) / 2;
+    const coinSize = coins[0]?.offsetWidth || 0;
+    const centerLeft = (wrap.offsetWidth - coinSize) / 2;
     coins.forEach(coin => {
       coin.style.transition = 'left 0.2s ease-in';
       coin.style.left = centerLeft + 'px';
@@ -541,18 +555,37 @@ async function doTap() {
         coin.style.animationDelay = `${i * 25}ms`;
         coin.classList.add('vanish');
       });
+      setTimeout(() => spawnSparkles(wrap, centerLeft, coinSize), 400);
     }, 200);
   }, 300);
 
-  // 3) Schwein wackelt 0.3s nach den Münzen (0.6s nach Tap-Start)
+  // Schwein wackelt 0.3s nach den Münzen (0.6s nach Tap-Start)
   setTimeout(() => {
     document.querySelector('.pig-img').classList.add('pig-wiggle');
   }, 600);
 
-  // Gesamtdauer der Sequenz abwarten (Wackeln endet zuletzt: 600ms + 1000ms)
-  await new Promise(r => setTimeout(r, 1600));
+  // Gesamtdauer der Sequenz abwarten (Münzen+Glitzer dauern am längsten: 300+200+400+800)
+  await new Promise(r => setTimeout(r, 1700));
 
   location.href = `/jar/${jarId}`;
+}
+
+function spawnSparkles(wrap, centerLeft, coinSize) {
+  const offsets = [
+    { x: -10, y: -8  }, { x: 14, y: -4 },
+    { x: -4,  y: 16  }, { x: 18, y: 12 },
+  ];
+  offsets.forEach((off, i) => {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('class', 'sparkle');
+    s.innerHTML = '<path d="M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z" fill="white"/>';
+    s.style.left = (centerLeft + coinSize / 2 - 9 + off.x) + 'px';
+    s.style.bottom = (coinSize / 2 - 9 + off.y) + 'px';
+    s.style.animationDelay = `${i * 30}ms`;
+    wrap.appendChild(s);
+    setTimeout(() => s.remove(), 900);
+  });
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
