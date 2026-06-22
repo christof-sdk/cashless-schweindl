@@ -349,6 +349,35 @@
       font-family: 'Lato', sans-serif; cursor: pointer; text-decoration: underline;
     }
 
+    .settings-divider {
+      border: none; border-top: 1px solid rgba(0,0,0,0.1);
+      margin: 20px 0 16px;
+    }
+
+    .settings-section-title {
+      font-family: 'Lato', sans-serif; font-weight: 700; font-size: 15px;
+      color: #4f4f4f; margin-bottom: 10px;
+    }
+
+    .settings-hint {
+      font-family: 'Lato', sans-serif; font-size: 13px; color: #6b6b6b;
+      margin-top: 8px;
+    }
+
+    .settings-card-element {
+      background: #fff; border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 12px; padding: 14px;
+    }
+
+    .settings-charge {
+      display: block; width: 100%; margin-top: 16px;
+      background: none; border: 1px solid #4f4f4f; border-radius: 56px;
+      color: #4f4f4f; font-family: 'Lato', sans-serif;
+      font-size: 16px; font-weight: 700; padding: 12px; cursor: pointer;
+    }
+    .settings-charge:active { transform: scale(0.97); }
+    .settings-charge:disabled { opacity: 0.5; cursor: default; }
+
     /* ── ONBOARDING ─────────────────────────────── */
     .onboard-screen {
       background: #EDE7D2;
@@ -523,6 +552,26 @@
       <span class="settings-suffix">€</span>
     </div>
 
+    <hr class="settings-divider">
+    <p class="settings-section-title">Zahlung & Abrechnung</p>
+
+    <div id="card-saved-hint" class="hidden">
+      <p class="settings-hint">Zahlungsmittel hinterlegt ✓</p>
+    </div>
+    <div id="card-capture-wrap">
+      <div class="settings-card-element" id="card-element"></div>
+      <button class="settings-charge" id="settings-save-card" type="button">Zahlungsmittel speichern</button>
+    </div>
+
+    <label class="settings-label" for="settings-threshold">Mindestbetrag für Abrechnung</label>
+    <div class="settings-goal-wrap">
+      <input class="settings-input" id="settings-threshold" type="number" min="1" step="1" placeholder="15">
+      <span class="settings-suffix">€</span>
+    </div>
+
+    <button class="settings-charge" id="settings-charge-now" type="button">Jetzt abrechnen</button>
+    <p class="settings-hint" id="charge-status"></p>
+
     <button class="settings-save" id="settings-save">Speichern</button>
     <button class="settings-cancel" id="settings-cancel">Abbrechen</button>
     <button class="settings-reset" id="settings-reset">Schweinchen zurücksetzen</button>
@@ -571,7 +620,16 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 
+<!-- Stripe.js -->
+<script src="https://js.stripe.com/v3/"></script>
+
 <script>
+// ── STRIPE CONFIG ─────────────────────────────────────────────────────────────
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51Tl7zSLHBulYslLUWQsm9alZ5pLtMLd1PmO2bMobHH91mSrUm8o5jk1xRbWHZ3XpNRymaO9OFmZMhY1uJkOdnfLB00IpEIOKbI';
+const stripe = window.Stripe ? Stripe(STRIPE_PUBLISHABLE_KEY) : null;
+let stripeElements = null;
+let stripeCard = null;
+
 // ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
 // Ersetze diese Werte mit deinem Firebase-Projekt (Projekteinstellungen → Web-App)
 const FIREBASE_CONFIG = {
@@ -784,7 +842,8 @@ function initSwipe() {
 }
 
 async function doTap() {
-  const tap = { amount: tapAmount, timestamp: Date.now(), status: 'confirmed' };
+  const hasPaymentMethod = !DEMO_MODE && !!currentJar?.stripePaymentMethodId;
+  const tap = { amount: tapAmount, timestamp: Date.now(), status: hasPaymentMethod ? 'pending' : 'confirmed' };
 
   if (!DEMO_MODE) {
     try {
@@ -864,6 +923,16 @@ let currentJar = null;
 function openSettings() {
   document.getElementById('settings-name').value = currentJar?.name || '';
   document.getElementById('settings-goal').value = currentJar?.goal || '';
+  document.getElementById('settings-threshold').value = currentJar?.payoutThreshold || 15;
+  document.getElementById('charge-status').textContent = '';
+
+  const hasCard = !!currentJar?.stripePaymentMethodId;
+  document.getElementById('card-saved-hint').classList.toggle('hidden', !hasCard);
+  document.getElementById('card-capture-wrap').classList.toggle('hidden', hasCard);
+  if (!DEMO_MODE && !hasCard && stripe) {
+    mountStripeCard();
+  }
+
   const overlay = document.getElementById('settings-overlay');
   overlay.classList.remove('hidden');
   requestAnimationFrame(() => overlay.classList.add('show'));
@@ -878,10 +947,11 @@ function closeSettings() {
 async function saveSettings() {
   const name = document.getElementById('settings-name').value.trim();
   const goal = parseInt(document.getElementById('settings-goal').value, 10);
+  const payoutThreshold = parseInt(document.getElementById('settings-threshold').value, 10) || 15;
   if (!name || !goal || goal < 1) return;
 
   if (!DEMO_MODE) {
-    await db.ref(`jars/${jarId}`).update({ name, goal });
+    await db.ref(`jars/${jarId}`).update({ name, goal, payoutThreshold });
   } else {
     DEMO_JAR.name = name;
     DEMO_JAR.goal = goal;
@@ -890,6 +960,89 @@ async function saveSettings() {
     setRing(DEMO_JAR.total, goal);
   }
   closeSettings();
+}
+
+function mountStripeCard() {
+  if (stripeCard) return;
+  stripeElements = stripe.elements();
+  stripeCard = stripeElements.create('card', { hidePostalCode: true });
+  stripeCard.mount('#card-element');
+}
+
+async function saveCard() {
+  if (DEMO_MODE || !stripe || !stripeCard) return;
+  const btn = document.getElementById('settings-save-card');
+  btn.disabled = true;
+  btn.textContent = 'Speichere…';
+
+  try {
+    const setupRes = await fetch('/api/setup-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jarId }),
+    });
+    const setupData = await setupRes.json();
+    if (!setupRes.ok) throw new Error(setupData.error || 'Setup fehlgeschlagen');
+
+    const result = await stripe.confirmCardSetup(setupData.clientSecret, {
+      payment_method: { card: stripeCard },
+    });
+    if (result.error) throw new Error(result.error.message);
+
+    await db.ref(`jars/${jarId}`).update({ stripePaymentMethodId: result.setupIntent.payment_method });
+    document.getElementById('card-saved-hint').classList.remove('hidden');
+    document.getElementById('card-capture-wrap').classList.add('hidden');
+  } catch (e) {
+    document.getElementById('charge-status').textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Zahlungsmittel speichern';
+  }
+}
+
+async function chargeNow() {
+  if (DEMO_MODE) return;
+  const btn = document.getElementById('settings-charge-now');
+  const status = document.getElementById('charge-status');
+  btn.disabled = true;
+  status.textContent = 'Rechne ab…';
+
+  try {
+    const res = await fetch('/api/charge-jar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jarId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Abrechnung fehlgeschlagen');
+    status.textContent = data.charged > 0
+      ? `${fmtEur(data.charged)} erfolgreich abgerechnet.`
+      : (data.message || 'Nichts offen.');
+  } catch (e) {
+    status.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function maybeAutoCharge(jarSnapshot) {
+  if (DEMO_MODE || !jarSnapshot?.stripePaymentMethodId) return;
+  const threshold = jarSnapshot.payoutThreshold || 15;
+  const taps = jarSnapshot.taps || {};
+  const pendingSum = Object.values(taps)
+    .filter(t => t.status === 'pending')
+    .reduce((acc, t) => acc + t.amount, 0);
+  if (pendingSum >= threshold) {
+    try {
+      await fetch('/api/charge-jar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jarId }),
+      });
+    } catch (e) {
+      console.error('Auto-Abrechnung fehlgeschlagen:', e);
+    }
+  }
 }
 
 async function resetJar() {
@@ -965,6 +1118,8 @@ async function init() {
     };
     document.getElementById('settings-save').onclick = saveSettings;
     document.getElementById('settings-reset').onclick = resetJar;
+    document.getElementById('settings-save-card').onclick = saveCard;
+    document.getElementById('settings-charge-now').onclick = chargeNow;
 
     if (DEMO_MODE) {
       currentJar = DEMO_JAR;
@@ -987,6 +1142,7 @@ async function init() {
         setRing(data.total || 0, data.goal || 150);
         renderTx(data.taps || {});
         document.getElementById('s-dash').classList.remove('hidden');
+        maybeAutoCharge(data);
       });
     }
 
@@ -1002,6 +1158,7 @@ async function init() {
       return;
     }
     if (jar) {
+      currentJar = jar;
       document.getElementById('pay-name').textContent = jar.name || '…';
     }
     setTapAmount(1);

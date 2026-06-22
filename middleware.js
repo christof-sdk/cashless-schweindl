@@ -1,4 +1,4 @@
-export const config = { matcher: ["/((?!_vercel|favicon.ico|assets/).*)"] };
+export const config = { matcher: ["/((?!_vercel|favicon.ico|assets/|api/).*)"] };
 
 export default function middleware(request) {
   const auth = request.headers.get("Authorization");
