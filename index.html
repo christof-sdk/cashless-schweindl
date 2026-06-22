@@ -332,12 +332,12 @@
     .onboard-screen {
       background: #EDE7D2;
       align-items: center; justify-content: center;
-      padding: 24px;
+      padding: 24px 24px 120px;
     }
     .onboard-content { width: 100%; max-width: 380px; }
 
     .onboard-dots {
-      display: flex; justify-content: center; gap: 8px; margin-bottom: 32px;
+      display: flex; justify-content: center; gap: 8px; margin-top: 28px;
     }
     .onboard-dot {
       width: 8px; height: 8px; border-radius: 50%;
@@ -363,16 +363,28 @@
       color: #6b6b6b; font-weight: 700;
     }
 
-    .onboard-nav {
-      display: flex; gap: 12px; margin-top: 28px;
+    .onboard-actions {
+      position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
+      width: min(284px, 80%);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
     }
-    .onboard-back, .onboard-next {
-      flex: 1; font-family: 'Lato', sans-serif; font-weight: 700; font-size: 16px;
-      padding: 14px; border-radius: 56px; cursor: pointer; border: none;
+    .onboard-next {
+      width: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: #5e5e5e; border: 1px solid #4f4f4f; border-radius: 56px;
+      color: #f2f2f2; font-family: 'Lato', sans-serif;
+      font-size: clamp(16px, 4.5vw, 20px); font-weight: 700;
+      padding: 14px 24px; cursor: pointer;
+      box-shadow: 0 4px 2px rgba(0,0,0,0.25);
     }
-    .onboard-back { background: none; color: #6b6b6b; border: 1px solid rgba(0,0,0,0.15); }
-    .onboard-next { background: #5e5e5e; color: #f2f2f2; }
-    .onboard-back:active, .onboard-next:active { transform: scale(0.97); }
+    .onboard-next:active { transform: scale(0.97); }
+
+    .onboard-back {
+      background: none; border: none;
+      color: #6b6b6b; font-family: 'Lato', sans-serif;
+      font-size: clamp(14px, 4vw, 17px); font-weight: 700;
+      text-decoration: underline; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -499,12 +511,6 @@
 <!-- ── ONBOARDING ─────────────────────────────────── -->
 <div id="s-onboard" class="screen hidden onboard-screen">
   <div class="onboard-content">
-    <div class="onboard-dots">
-      <span class="onboard-dot" data-step="0"></span>
-      <span class="onboard-dot" data-step="1"></span>
-      <span class="onboard-dot" data-step="2"></span>
-    </div>
-
     <div class="onboard-step" id="onboard-step-0">
       <p class="onboard-emoji">🐷</p>
       <h2 class="onboard-title">Worauf sparst du?</h2>
@@ -527,10 +533,16 @@
       <p class="onboard-hint">Optional — kann später ergänzt werden</p>
     </div>
 
-    <div class="onboard-nav">
-      <button class="onboard-back" id="onboard-back">Zurück</button>
-      <button class="onboard-next" id="onboard-next">Weiter</button>
+    <div class="onboard-dots">
+      <span class="onboard-dot" data-step="0"></span>
+      <span class="onboard-dot" data-step="1"></span>
+      <span class="onboard-dot" data-step="2"></span>
     </div>
+  </div>
+
+  <div class="onboard-actions">
+    <button class="onboard-next" id="onboard-next">Weiter</button>
+    <button class="onboard-back" id="onboard-back">Zurück</button>
   </div>
 </div>
 
@@ -876,7 +888,7 @@ function showOnboardStep(i) {
     document.getElementById(`onboard-step-${s}`).classList.toggle('hidden', s !== i);
     document.querySelector(`.onboard-dot[data-step="${s}"]`).classList.toggle('active', s === i);
   }
-  document.getElementById('onboard-back').style.visibility = i === 0 ? 'hidden' : 'visible';
+  document.getElementById('onboard-back').classList.toggle('hidden', i === 0);
   document.getElementById('onboard-next').textContent = i === ONBOARD_STEPS - 1 ? 'Fertig' : 'Weiter';
 }
 
