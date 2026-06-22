@@ -147,8 +147,12 @@
     .ctrl-img {
       width: min(19vw, 72px); cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s ease, filter 0.15s ease;
     }
-    .ctrl-img:active { transform: scale(0.9); }
+    .ctrl-img:active {
+      transform: scale(0.9);
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.95)) brightness(1.2);
+    }
 
     /* Swipe-to-pay pill */
     .swipe-pill {
