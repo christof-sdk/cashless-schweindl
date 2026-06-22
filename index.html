@@ -229,6 +229,18 @@
       100% { transform: scale(0.3);  opacity: 0; filter: brightness(2)   drop-shadow(0 0 20px rgba(255,255,255,0.9)); }
     }
 
+    .sparkle-group {
+      position: absolute;
+      pointer-events: none;
+      animation: sparkle-group-scale 0.8s ease-out forwards;
+    }
+    @keyframes sparkle-group-scale {
+      0%    { transform: scale(1); }
+      10%   { transform: scale(1); }
+      37.5% { transform: scale(1.5); }
+      100%  { transform: scale(1.5); }
+    }
+
     .sparkle {
       position: absolute;
       width: 18px; height: 18px;
@@ -814,6 +826,12 @@ async function doTap() {
 }
 
 function spawnSparkles(wrap, centerLeft, coinSize) {
+  const group = document.createElement('div');
+  group.className = 'sparkle-group';
+  group.style.left = (centerLeft + coinSize / 2) + 'px';
+  group.style.bottom = (coinSize / 2) + 'px';
+  wrap.appendChild(group);
+
   const offsets = [
     { x: -10, y: -8  }, { x: 14, y: -4 },
     { x: -4,  y: 16  }, { x: 18, y: 12 },
@@ -823,12 +841,12 @@ function spawnSparkles(wrap, centerLeft, coinSize) {
     s.setAttribute('viewBox', '0 0 24 24');
     s.setAttribute('class', 'sparkle');
     s.innerHTML = '<path d="M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z" fill="white"/>';
-    s.style.left = (centerLeft + coinSize / 2 - 9 + off.x) + 'px';
-    s.style.bottom = (coinSize / 2 - 9 + off.y) + 'px';
+    s.style.left = (off.x - 9) + 'px';
+    s.style.bottom = (off.y - 9) + 'px';
     s.style.animationDelay = `${i * 30}ms`;
-    wrap.appendChild(s);
-    setTimeout(() => s.remove(), 900);
+    group.appendChild(s);
   });
+  setTimeout(() => group.remove(), 900);
 }
 
 // ── SETTINGS ACTION SHEET ──────────────────────────────────────────────────────
