@@ -9,6 +9,11 @@ export default function middleware(request) {
       const decoded = atob(encoded);
       const [, password] = decoded.split(":");
       if (password === process.env.PREVIEW_PASSWORD) {
+        const url = new URL(request.url);
+        if (url.pathname === "/") {
+          url.pathname = "/jar/49006b6473/pay";
+          return Response.redirect(url, 307);
+        }
         return;
       }
     }
