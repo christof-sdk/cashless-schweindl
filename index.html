@@ -320,6 +320,59 @@
       background: none; color: #6b6b6b; border: none;
       padding: 10px; font-size: 15px; font-family: 'Lato', sans-serif; cursor: pointer;
     }
+
+    .settings-reset {
+      display: block; width: 100%; margin-top: 4px;
+      background: none; color: #b35c4a; border: none;
+      padding: 10px; font-size: 15px; font-weight: 700;
+      font-family: 'Lato', sans-serif; cursor: pointer; text-decoration: underline;
+    }
+
+    /* ── ONBOARDING ─────────────────────────────── */
+    .onboard-screen {
+      background: #EDE7D2;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .onboard-content { width: 100%; max-width: 380px; }
+
+    .onboard-dots {
+      display: flex; justify-content: center; gap: 8px; margin-bottom: 32px;
+    }
+    .onboard-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(0,0,0,0.15);
+    }
+    .onboard-dot.active { background: #51e0bf; }
+
+    .onboard-step { text-align: center; }
+    .onboard-emoji { font-size: 48px; margin-bottom: 8px; }
+    .onboard-title {
+      font-family: 'Lato', sans-serif; font-weight: 700; font-size: clamp(20px, 6vw, 26px);
+      color: #4f4f4f; margin-bottom: 20px;
+    }
+    .onboard-hint {
+      font-family: 'Lato', sans-serif; font-size: 14px; color: #9b9b9b;
+      margin-top: 10px;
+    }
+
+    .onboard-goal-wrap { position: relative; }
+    .onboard-goal-wrap .settings-input { padding-right: 36px; }
+    .onboard-suffix {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      color: #6b6b6b; font-weight: 700;
+    }
+
+    .onboard-nav {
+      display: flex; gap: 12px; margin-top: 28px;
+    }
+    .onboard-back, .onboard-next {
+      flex: 1; font-family: 'Lato', sans-serif; font-weight: 700; font-size: 16px;
+      padding: 14px; border-radius: 56px; cursor: pointer; border: none;
+    }
+    .onboard-back { background: none; color: #6b6b6b; border: 1px solid rgba(0,0,0,0.15); }
+    .onboard-next { background: #5e5e5e; color: #f2f2f2; }
+    .onboard-back:active, .onboard-next:active { transform: scale(0.97); }
   </style>
 </head>
 <body>
@@ -439,6 +492,45 @@
 
     <button class="settings-save" id="settings-save">Speichern</button>
     <button class="settings-cancel" id="settings-cancel">Abbrechen</button>
+    <button class="settings-reset" id="settings-reset">Schweinchen zurücksetzen</button>
+  </div>
+</div>
+
+<!-- ── ONBOARDING ─────────────────────────────────── -->
+<div id="s-onboard" class="screen hidden onboard-screen">
+  <div class="onboard-content">
+    <div class="onboard-dots">
+      <span class="onboard-dot" data-step="0"></span>
+      <span class="onboard-dot" data-step="1"></span>
+      <span class="onboard-dot" data-step="2"></span>
+    </div>
+
+    <div class="onboard-step" id="onboard-step-0">
+      <p class="onboard-emoji">🐷</p>
+      <h2 class="onboard-title">Worauf sparst du?</h2>
+      <input class="settings-input" id="onboard-name" type="text" placeholder="z.B. Urlaub">
+    </div>
+
+    <div class="onboard-step hidden" id="onboard-step-1">
+      <p class="onboard-emoji">🎯</p>
+      <h2 class="onboard-title">Wieviel möchtest du sparen?</h2>
+      <div class="onboard-goal-wrap">
+        <input class="settings-input" id="onboard-goal" type="number" min="1" step="1" placeholder="150">
+        <span class="onboard-suffix">€</span>
+      </div>
+    </div>
+
+    <div class="onboard-step hidden" id="onboard-step-2">
+      <p class="onboard-emoji">💳</p>
+      <h2 class="onboard-title">Wo soll das Geld gesammelt werden?</h2>
+      <input class="settings-input" id="onboard-collection" type="text" placeholder="PayPal.me-Link oder E-Mail">
+      <p class="onboard-hint">Optional — kann später ergänzt werden</p>
+    </div>
+
+    <div class="onboard-nav">
+      <button class="onboard-back" id="onboard-back">Zurück</button>
+      <button class="onboard-next" id="onboard-next">Weiter</button>
+    </div>
   </div>
 </div>
 
@@ -761,6 +853,61 @@ async function saveSettings() {
   closeSettings();
 }
 
+async function resetJar() {
+  const confirmed = confirm('Möchtest du das Schweinchen wirklich zurücksetzen? Alle Einzahlungen und Einstellungen werden gelöscht und das Onboarding startet neu.');
+  if (!confirmed || DEMO_MODE) { closeSettings(); return; }
+
+  const snap = await db.ref(`jars/${jarId}`).once('value');
+  const data = snap.val();
+  if (data) {
+    await db.ref(`archive/${jarId}/${Date.now()}`).set(data);
+  }
+  await db.ref(`jars/${jarId}`).set({ onboarded: false });
+  closeSettings();
+}
+
+// ── ONBOARDING ────────────────────────────────────────────────────────────────
+const ONBOARD_STEPS = 3;
+let onboardStep = 0;
+
+function showOnboardStep(i) {
+  onboardStep = i;
+  for (let s = 0; s < ONBOARD_STEPS; s++) {
+    document.getElementById(`onboard-step-${s}`).classList.toggle('hidden', s !== i);
+    document.querySelector(`.onboard-dot[data-step="${s}"]`).classList.toggle('active', s === i);
+  }
+  document.getElementById('onboard-back').style.visibility = i === 0 ? 'hidden' : 'visible';
+  document.getElementById('onboard-next').textContent = i === ONBOARD_STEPS - 1 ? 'Fertig' : 'Weiter';
+}
+
+function initOnboarding() {
+  document.getElementById('onboard-name').value = '';
+  document.getElementById('onboard-goal').value = '';
+  document.getElementById('onboard-collection').value = '';
+  showOnboardStep(0);
+  document.getElementById('onboard-back').onclick = () => {
+    if (onboardStep > 0) showOnboardStep(onboardStep - 1);
+  };
+  document.getElementById('onboard-next').onclick = async () => {
+    if (onboardStep === 0 && !document.getElementById('onboard-name').value.trim()) return;
+    if (onboardStep === 1 && !parseInt(document.getElementById('onboard-goal').value, 10)) return;
+    if (onboardStep < ONBOARD_STEPS - 1) {
+      showOnboardStep(onboardStep + 1);
+    } else {
+      await finishOnboarding();
+    }
+  };
+}
+
+async function finishOnboarding() {
+  const name = document.getElementById('onboard-name').value.trim();
+  const goal = parseInt(document.getElementById('onboard-goal').value, 10);
+  const collection = document.getElementById('onboard-collection').value.trim();
+  if (!name || !goal) return;
+
+  await db.ref(`jars/${jarId}`).set({ onboarded: true, name, goal, collection, total: 0 });
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
 
@@ -778,6 +925,7 @@ async function init() {
       if (e.target.id === 'settings-overlay') closeSettings();
     };
     document.getElementById('settings-save').onclick = saveSettings;
+    document.getElementById('settings-reset').onclick = resetJar;
 
     if (DEMO_MODE) {
       currentJar = DEMO_JAR;
@@ -788,15 +936,13 @@ async function init() {
     } else {
       db.ref(`jars/${jarId}`).on('value', snap => {
         const data = snap.val();
-        if (!data) {
-          document.body.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:center;height:100vh;
-                        background:#51e0bf;color:#333;font-family:Lato,sans-serif;
-                        font-size:18px;padding:40px;text-align:center">
-              Sparschwein nicht gefunden.
-            </div>`;
+        if (!data || !data.onboarded) {
+          document.getElementById('s-dash').classList.add('hidden');
+          document.getElementById('s-onboard').classList.remove('hidden');
+          initOnboarding();
           return;
         }
+        document.getElementById('s-onboard').classList.add('hidden');
         currentJar = data;
         document.getElementById('dash-name').textContent = data.name;
         setRing(data.total || 0, data.goal || 150);
@@ -812,6 +958,10 @@ async function init() {
     document.getElementById('plus-btn').onclick  = () => setTapAmount(tapAmount + 1);
 
     const jar = await loadJar();
+    if (!DEMO_MODE && (!jar || !jar.onboarded)) {
+      location.href = `/jar/${jarId}`;
+      return;
+    }
     if (jar) {
       document.getElementById('pay-name').textContent = jar.name || '…';
     }
