@@ -256,6 +256,70 @@
       70%      { transform: rotate(-7deg); }
       85%      { transform: rotate(7deg); }
     }
+
+    /* ── SETTINGS ACTION SHEET ─────────────────── */
+    .settings-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 100;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .settings-overlay.show { opacity: 1; pointer-events: auto; }
+
+    .settings-sheet {
+      background: #EDE7D2;
+      width: 100%; max-width: 480px;
+      border-radius: 24px 24px 0 0;
+      padding: 12px 24px 28px;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.2);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .settings-overlay.show .settings-sheet { transform: translateY(0); }
+
+    .settings-handle {
+      width: 40px; height: 5px; border-radius: 3px;
+      background: rgba(0,0,0,0.2);
+      margin: 8px auto 20px;
+    }
+
+    .settings-label {
+      display: block; font-family: 'Lato', sans-serif;
+      font-weight: 700; color: #4f4f4f;
+      font-size: 15px; margin: 18px 0 8px;
+    }
+    .settings-label:first-of-type { margin-top: 0; }
+
+    .settings-input {
+      width: 100%; box-sizing: border-box;
+      font-family: 'Lato', sans-serif; font-size: 17px;
+      padding: 12px 14px; border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.15);
+      background: #fff; color: #333;
+    }
+
+    .settings-goal-wrap { position: relative; }
+    .settings-goal-wrap .settings-input { padding-right: 36px; }
+    .settings-suffix {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      color: #6b6b6b; font-weight: 700;
+    }
+
+    .settings-save {
+      display: block; width: 100%; margin-top: 24px;
+      background: #5e5e5e; color: #f2f2f2; border: none;
+      border-radius: 56px; padding: 14px; font-size: 17px; font-weight: 700;
+      font-family: 'Lato', sans-serif; cursor: pointer;
+    }
+    .settings-save:active { transform: scale(0.97); }
+
+    .settings-cancel {
+      display: block; width: 100%; margin-top: 10px;
+      background: none; color: #6b6b6b; border: none;
+      padding: 10px; font-size: 15px; font-family: 'Lato', sans-serif; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -263,7 +327,7 @@
 <!-- ── DASHBOARD ──────────────────────────────────── -->
 <div id="s-dash" class="screen hidden">
   <div class="dash-top">
-    <button class="gear-btn" title="Einstellungen">
+    <button class="gear-btn" id="gear-btn" title="Einstellungen">
       <svg viewBox="0 0 24 24" fill="none" stroke="#4f4f4f" stroke-width="1.8"
            stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -356,6 +420,25 @@
     <svg class="ctrl-img" id="plus-btn" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M32 64C38.329 64 44.5159 62.1232 49.7782 58.607C55.0406 55.0908 59.1421 50.0931 61.5641 44.2459C63.9861 38.3987 64.6199 31.9645 63.3851 25.7571C62.1504 19.5497 59.1027 13.8479 54.6274 9.3726C50.1521 4.89732 44.4503 1.84961 38.2429 0.614885C32.0355 -0.619842 25.6014 0.0138653 19.7541 2.43587C13.9069 4.85787 8.90918 8.95939 5.39297 14.2218C1.87677 19.4841 0 25.671 0 32C0 40.4869 3.37142 48.6263 9.37258 54.6274C15.3737 60.6286 23.5131 64 32 64ZM16 29.3333H28.6667C28.8435 29.3333 29.013 29.2631 29.1381 29.1381C29.2631 29.0131 29.3333 28.8435 29.3333 28.6667V16C29.3333 15.2928 29.6143 14.6145 30.1144 14.1144C30.6145 13.6143 31.2928 13.3333 32 13.3333C32.7072 13.3333 33.3855 13.6143 33.8856 14.1144C34.3857 14.6145 34.6667 15.2928 34.6667 16V28.6667C34.6667 28.8435 34.7369 29.0131 34.8619 29.1381C34.987 29.2631 35.1565 29.3333 35.3333 29.3333H48C48.7072 29.3333 49.3855 29.6143 49.8856 30.1144C50.3857 30.6145 50.6667 31.2928 50.6667 32C50.6667 32.7073 50.3857 33.3855 49.8856 33.8856C49.3855 34.3857 48.7072 34.6667 48 34.6667H35.3333C35.1565 34.6667 34.987 34.7369 34.8619 34.8619C34.7369 34.987 34.6667 35.1565 34.6667 35.3334V48C34.6667 48.7073 34.3857 49.3855 33.8856 49.8856C33.3855 50.3857 32.7072 50.6667 32 50.6667C31.2928 50.6667 30.6145 50.3857 30.1144 49.8856C29.6143 49.3855 29.3333 48.7073 29.3333 48V35.3334C29.3333 35.1565 29.2631 34.987 29.1381 34.8619C29.013 34.7369 28.8435 34.6667 28.6667 34.6667H16C15.2928 34.6667 14.6145 34.3857 14.1144 33.8856C13.6143 33.3855 13.3333 32.7073 13.3333 32C13.3333 31.2928 13.6143 30.6145 14.1144 30.1144C14.6145 29.6143 15.2928 29.3333 16 29.3333Z" fill="#333333"/>
     </svg>
+  </div>
+</div>
+
+<!-- ── SETTINGS ACTION SHEET ────────────────────── -->
+<div id="settings-overlay" class="settings-overlay hidden">
+  <div class="settings-sheet">
+    <div class="settings-handle"></div>
+
+    <label class="settings-label" for="settings-name">Worauf sparst du?</label>
+    <input class="settings-input" id="settings-name" type="text" placeholder="z.B. Urlaub">
+
+    <label class="settings-label" for="settings-goal">Wieviel möchtest du sparen?</label>
+    <div class="settings-goal-wrap">
+      <input class="settings-input" id="settings-goal" type="number" min="1" step="1" placeholder="150">
+      <span class="settings-suffix">€</span>
+    </div>
+
+    <button class="settings-save" id="settings-save">Speichern</button>
+    <button class="settings-cancel" id="settings-cancel">Abbrechen</button>
   </div>
 </div>
 
@@ -644,6 +727,40 @@ function spawnSparkles(wrap, centerLeft, coinSize) {
   });
 }
 
+// ── SETTINGS ACTION SHEET ──────────────────────────────────────────────────────
+let currentJar = null;
+
+function openSettings() {
+  document.getElementById('settings-name').value = currentJar?.name || '';
+  document.getElementById('settings-goal').value = currentJar?.goal || '';
+  const overlay = document.getElementById('settings-overlay');
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => overlay.classList.add('show'));
+}
+
+function closeSettings() {
+  const overlay = document.getElementById('settings-overlay');
+  overlay.classList.remove('show');
+  setTimeout(() => overlay.classList.add('hidden'), 300);
+}
+
+async function saveSettings() {
+  const name = document.getElementById('settings-name').value.trim();
+  const goal = parseInt(document.getElementById('settings-goal').value, 10);
+  if (!name || !goal || goal < 1) return;
+
+  if (!DEMO_MODE) {
+    await db.ref(`jars/${jarId}`).update({ name, goal });
+  } else {
+    DEMO_JAR.name = name;
+    DEMO_JAR.goal = goal;
+    currentJar = DEMO_JAR;
+    document.getElementById('dash-name').textContent = name;
+    setRing(DEMO_JAR.total, goal);
+  }
+  closeSettings();
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
 
@@ -655,8 +772,15 @@ async function init() {
 
   if (screen === 'dash') {
     document.getElementById('einzahlen-btn').onclick = () => { location.href = `/jar/${jarId}/pay`; };
+    document.getElementById('gear-btn').onclick = openSettings;
+    document.getElementById('settings-cancel').onclick = closeSettings;
+    document.getElementById('settings-overlay').onclick = (e) => {
+      if (e.target.id === 'settings-overlay') closeSettings();
+    };
+    document.getElementById('settings-save').onclick = saveSettings;
 
     if (DEMO_MODE) {
+      currentJar = DEMO_JAR;
       document.getElementById('dash-name').textContent = DEMO_JAR.name;
       setRing(DEMO_JAR.total, DEMO_JAR.goal);
       renderTx(DEMO_JAR.taps);
@@ -673,6 +797,7 @@ async function init() {
             </div>`;
           return;
         }
+        currentJar = data;
         document.getElementById('dash-name').textContent = data.name;
         setRing(data.total || 0, data.goal || 150);
         renderTx(data.taps || {});
