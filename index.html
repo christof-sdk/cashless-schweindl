@@ -181,6 +181,49 @@
       border-radius: 50%;
       box-shadow: 0 2px 8px rgba(0,0,0,0.4);
       pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .thumb-check {
+      width: 60%; height: 60%;
+      opacity: 0;
+    }
+    .thumb-check path {
+      stroke-dasharray: 20;
+      stroke-dashoffset: 20;
+    }
+    .thumb-check.draw {
+      opacity: 1;
+      animation: thumb-check-fade 0.05s ease forwards;
+    }
+    .thumb-check.draw path {
+      animation: thumb-check-draw 0.4s ease forwards;
+    }
+    @keyframes thumb-check-fade { to { opacity: 1; } }
+    @keyframes thumb-check-draw { to { stroke-dashoffset: 0; } }
+
+    .coin.vanish {
+      animation: coin-vanish 0.35s ease-in forwards;
+    }
+    @keyframes coin-vanish {
+      0%   { transform: scale(1);    opacity: 1; filter: brightness(1)   drop-shadow(0 0 0 rgba(255,255,255,0)); }
+      40%  { transform: scale(1.15); opacity: 1; filter: brightness(1.7) drop-shadow(0 0 14px rgba(255,255,255,0.9)); }
+      100% { transform: scale(0.3);  opacity: 0; filter: brightness(2)   drop-shadow(0 0 20px rgba(255,255,255,0.9)); }
+    }
+
+    .pig-img.pig-wiggle {
+      animation: pig-wiggle 1.5s ease-in-out;
+      transform-origin: 50% 100%;
+    }
+    @keyframes pig-wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      10%      { transform: rotate(-8deg); }
+      30%      { transform: rotate(8deg); }
+      50%      { transform: rotate(-6deg); }
+      70%      { transform: rotate(6deg); }
+      90%      { transform: rotate(-3deg); }
     }
   </style>
 </head>
@@ -271,7 +314,11 @@
           <path d="M2 10 L10 2 L18 10" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <div class="swipe-thumb" id="swipe-thumb"></div>
+      <div class="swipe-thumb" id="swipe-thumb">
+        <svg class="thumb-check" id="thumb-check" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path id="thumb-check-path" d="M5 13l4 4L19 7" stroke="#2ec4a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
 
     <svg class="ctrl-img" id="plus-btn" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -475,7 +522,23 @@ async function doTap() {
   const s = document.getElementById('s-pay');
   s.style.transition = 'background 0.2s';
   s.style.background = '#2ec4a0';
-  await new Promise(r => setTimeout(r, 500));
+
+  // 1) Münzen verschwinden (Magie-Effekt, leicht gestaffelt)
+  const coins = document.querySelectorAll('#coins-wrap .coin');
+  coins.forEach((coin, i) => {
+    coin.style.animationDelay = `${i * 40}ms`;
+    coin.classList.add('vanish');
+  });
+  await new Promise(r => setTimeout(r, 350 + coins.length * 40));
+
+  // 2) Häkchen im Slider-Thumb wird gezeichnet
+  document.getElementById('thumb-check').classList.add('draw');
+  await new Promise(r => setTimeout(r, 450));
+
+  // 3) Schwein wackelt
+  document.querySelector('.pig-img').classList.add('pig-wiggle');
+  await new Promise(r => setTimeout(r, 1500));
+
   location.href = `/jar/${jarId}`;
 }
 
