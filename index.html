@@ -574,11 +574,12 @@
     <hr class="settings-divider">
     <p class="settings-section-title">Zahlung & Abrechnung</p>
 
-    <label class="settings-label" for="settings-threshold">Mindestbetrag für Abrechnung</label>
+    <label class="settings-label" for="settings-threshold">Mindestbetrag pro Person für Abrechnung</label>
     <div class="settings-goal-wrap">
       <input class="settings-input" id="settings-threshold" type="number" min="1" step="1" placeholder="15">
       <span class="settings-suffix">€</span>
     </div>
+    <p class="settings-hint">Jede Person wird abgerechnet, sobald ihr eigener offener Betrag diese Summe erreicht — spätestens aber nach 30 Tagen.</p>
 
     <button class="settings-charge" id="settings-charge-now" type="button">Jetzt abrechnen</button>
     <p class="settings-hint" id="charge-status"></p>
@@ -1038,7 +1039,7 @@ async function chargeNow() {
     const res = await fetch('/api/charge-jar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jarId }),
+      body: JSON.stringify({ jarId, force: true }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Abrechnung fehlgeschlagen');
@@ -1054,12 +1055,11 @@ async function chargeNow() {
 
 async function maybeAutoCharge(jarSnapshot) {
   if (DEMO_MODE) return;
-  const threshold = jarSnapshot.payoutThreshold || 15;
   const taps = jarSnapshot.taps || {};
-  const pendingSum = Object.values(taps)
-    .filter(t => t.status === 'pending')
-    .reduce((acc, t) => acc + t.amount, 0);
-  if (pendingSum >= threshold) {
+  const hasPending = Object.values(taps).some(t => t.status === 'pending');
+  // Schwellenwert/30-Tage-Regel wird serverseitig pro Zahler geprüft (api/charge-jar.js) —
+  // hier nur ein leichtgewichtiger Vorab-Check, ob überhaupt etwas offen ist.
+  if (hasPending) {
     try {
       await fetch('/api/charge-jar', {
         method: 'POST',
