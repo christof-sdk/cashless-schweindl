@@ -17,18 +17,21 @@ function toFormParams(obj, prefix = '') {
   return params;
 }
 
-async function stripeRequest(path, params = {}) {
+async function stripeRequest(path, params = {}, method = 'POST') {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) throw new Error('STRIPE_SECRET_KEY ist nicht gesetzt');
 
-  const body = new URLSearchParams(toFormParams(params)).toString();
-  const res = await fetch(`${STRIPE_API}/${path}`, {
-    method: 'POST',
+  const isGet = method === 'GET';
+  const query = isGet && Object.keys(params).length
+    ? `?${new URLSearchParams(toFormParams(params)).toString()}`
+    : '';
+  const res = await fetch(`${STRIPE_API}/${path}${query}`, {
+    method,
     headers: {
       Authorization: `Basic ${Buffer.from(`${secretKey}:`).toString('base64')}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body,
+    body: isGet ? undefined : new URLSearchParams(toFormParams(params)).toString(),
   });
 
   const data = await res.json();
