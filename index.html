@@ -149,7 +149,7 @@
       -webkit-tap-highlight-color: transparent;
       transition: transform 0.15s ease, filter 0.15s ease;
     }
-    .ctrl-img:active {
+    .ctrl-img:active, .ctrl-img.tap-active {
       transform: scale(0.9);
       filter: drop-shadow(0 0 10px rgba(255,255,255,0.95)) brightness(1.2);
     }
@@ -796,6 +796,20 @@ function setTapAmount(n) {
   document.getElementById('pay-amount-value').textContent = `${tapAmount},00`;
 }
 
+// CSS :active alone is unreliable for tap feedback on iOS Safari unless the
+// element has its own touch listener — drive the state via JS instead so it
+// works consistently across touch and mouse.
+function addTapActiveFeedback(el) {
+  const press   = () => el.classList.add('tap-active');
+  const release = () => el.classList.remove('tap-active');
+  el.addEventListener('touchstart', press,   { passive: true });
+  el.addEventListener('touchend',   release, { passive: true });
+  el.addEventListener('touchcancel', release, { passive: true });
+  el.addEventListener('mousedown',  press);
+  el.addEventListener('mouseup',    release);
+  el.addEventListener('mouseleave', release);
+}
+
 // ── SWIPE GESTURE ─────────────────────────────────────────────────────────────
 function initSwipe() {
   const pill  = document.getElementById('swipe-pill');
@@ -1148,6 +1162,8 @@ async function init() {
     document.getElementById('back-btn').onclick  = () => { location.href = `/jar/${jarId}`; };
     document.getElementById('minus-btn').onclick = () => setTapAmount(tapAmount - 1);
     document.getElementById('plus-btn').onclick  = () => setTapAmount(tapAmount + 1);
+    addTapActiveFeedback(document.getElementById('minus-btn'));
+    addTapActiveFeedback(document.getElementById('plus-btn'));
 
     const jar = await loadJar();
     if (!DEMO_MODE && (!jar || !jar.onboarded)) {
