@@ -695,6 +695,7 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 
 <!-- Stripe.js -->
 <script src="https://js.stripe.com/v3/"></script>
@@ -706,7 +707,11 @@ const stripe = window.Stripe ? Stripe(STRIPE_PUBLISHABLE_KEY) : null;
 
 // Zahlungsmittel ist an dieses Gerät/Browser gebunden, nicht an ein Jar —
 // jede Person zahlt mit ihrer eigenen Karte, unabhängig davon, welches
-// Schweinchen sie antippt.
+// Schweinchen sie antippt. localStorage bleibt der schnelle lokale Cache für
+// UI-Anzeige (Kartenmarke, hasCard-Check); die für Stripe-Charges relevante
+// Quelle ist payerProfiles/{uid} in Firebase, geschützt durch Anonymous Auth
+// (auth.uid === $uid) — siehe payerReadyPromise unten. So kann niemand mehr
+// fremde stripeCustomerId/PaymentMethodId-Paare auf einen Tap schreiben.
 function getPayerInfo() {
   return {
     customerId: localStorage.getItem('payerCustomerId'),
@@ -715,14 +720,29 @@ function getPayerInfo() {
     cardLast4: localStorage.getItem('payerCardLast4'),
   };
 }
-function savePayerInfo(customerId, paymentMethodId, cardBrand, cardLast4) {
+async function savePayerInfo(customerId, paymentMethodId, cardBrand, cardLast4) {
   localStorage.setItem('payerCustomerId', customerId);
   localStorage.setItem('payerPaymentMethodId', paymentMethodId);
   if (cardBrand) localStorage.setItem('payerCardBrand', cardBrand);
   if (cardLast4) localStorage.setItem('payerCardLast4', cardLast4);
+  if (!DEMO_MODE) {
+    const uid = await payerReadyPromise;
+    if (uid) {
+      await db.ref(`payerProfiles/${uid}`).set({
+        customerId, paymentMethodId,
+        cardBrand: cardBrand || null,
+        cardLast4: cardLast4 || null,
+      });
+    }
+  }
 }
 function forgetPayerCard() {
   ['payerCustomerId', 'payerPaymentMethodId', 'payerCardBrand', 'payerCardLast4'].forEach(k => localStorage.removeItem(k));
+  if (!DEMO_MODE) {
+    payerReadyPromise.then(uid => {
+      if (uid) return db.ref(`payerProfiles/${uid}`).remove();
+    }).catch(e => console.error('Payer-Profil konnte nicht entfernt werden:', e));
+  }
 }
 function hasPayerCard() {
   const { customerId, paymentMethodId } = getPayerInfo();
@@ -759,9 +779,39 @@ const DEMO_JAR = {
 
 const DEMO_MODE = FIREBASE_CONFIG.apiKey.startsWith('REPLACE');
 let db = null;
+
+// payerReadyPromise resolves to this device's stable Firebase Anonymous Auth uid.
+// Every tap that claims a payment method carries this uid (not raw Stripe IDs —
+// see payerUid in doTap()), and the DB rules guarantee a device can only ever
+// claim its own uid. Devices that already had a card saved in localStorage from
+// before this migration get backfilled into payerProfiles/{uid} once here.
+let payerReadyPromise = Promise.resolve(null);
+
 if (!DEMO_MODE) {
   firebase.initializeApp(FIREBASE_CONFIG);
   db = firebase.database();
+  payerReadyPromise = firebase.auth().signInAnonymously()
+    .then(cred => cred.user.uid)
+    .catch(e => { console.error('Anonyme Anmeldung fehlgeschlagen:', e); return null; })
+    .then(async (uid) => {
+      if (!uid) return null;
+      const { customerId, paymentMethodId, cardBrand, cardLast4 } = getPayerInfo();
+      if (customerId && paymentMethodId) {
+        try {
+          const snap = await db.ref(`payerProfiles/${uid}`).once('value');
+          if (!snap.exists()) {
+            await db.ref(`payerProfiles/${uid}`).set({
+              customerId, paymentMethodId,
+              cardBrand: cardBrand || null,
+              cardLast4: cardLast4 || null,
+            });
+          }
+        } catch (e) {
+          console.error('Payer-Profil-Migration fehlgeschlagen:', e);
+        }
+      }
+      return uid;
+    });
 }
 
 // ── ROUTING ───────────────────────────────────────────────────────────────────
@@ -974,7 +1024,7 @@ function showPayCardGate() {
         console.error('Kartendetails konnten nicht geladen werden:', e);
       }
 
-      savePayerInfo(setupData.customerId, pmId, cardBrand, cardLast4);
+      await savePayerInfo(setupData.customerId, pmId, cardBrand, cardLast4);
       updatePaymentsIconStatus();
       document.getElementById('pay-card-gate').classList.add('hidden');
       document.getElementById('pay-amount-card').classList.remove('hidden');
@@ -988,12 +1038,11 @@ function showPayCardGate() {
 }
 
 async function doTap() {
-  const { customerId, paymentMethodId } = !DEMO_MODE ? getPayerInfo() : {};
-  const hasPaymentMethod = !DEMO_MODE && !!customerId && !!paymentMethodId;
+  const uid = !DEMO_MODE ? await payerReadyPromise : null;
+  const hasPaymentMethod = !DEMO_MODE && hasPayerCard() && !!uid;
   const tap = { amount: tapAmount, timestamp: Date.now(), status: hasPaymentMethod ? 'pending' : 'confirmed' };
   if (hasPaymentMethod) {
-    tap.stripeCustomerId = customerId;
-    tap.stripePaymentMethodId = paymentMethodId;
+    tap.payerUid = uid;
   }
 
   if (!DEMO_MODE) {
