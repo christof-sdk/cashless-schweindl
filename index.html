@@ -373,6 +373,28 @@
       margin-top: 8px;
     }
 
+    .card-display {
+      display: flex; align-items: center; gap: 12px;
+      background: #fff; border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 12px; padding: 14px 16px; margin-top: 4px;
+    }
+    .card-brand-badge {
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 26px; border-radius: 5px;
+      background: #4f4f4f; color: #fff;
+      font-family: 'Lato', sans-serif; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .card-brand-badge.visa { background: #1A1F71; }
+    .card-brand-badge.mastercard { background: #EB001B; }
+    .card-brand-badge.amex { background: #006FCF; }
+    .card-brand-badge.discover { background: #FF6000; }
+    .card-number {
+      font-family: 'Lato', sans-serif; font-size: clamp(15px, 4.5vw, 18px);
+      font-weight: 700; color: #333; letter-spacing: 0.5px;
+    }
+
     .settings-card-element {
       background: #fff; border: 1px solid rgba(0,0,0,0.15);
       border-radius: 12px; padding: 14px;
@@ -465,8 +487,12 @@
   <div class="dash-top">
     <button class="icon-btn" id="payments-icon-btn" title="Zahlungen verwalten">
       <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10.787 17.4161C9.90792 16.537 9.41406 15.3448 9.41406 14.1016C9.41406 12.8584 9.90792 11.6661 10.787 10.787C11.6661 9.90792 12.8584 9.41406 14.1016 9.41406C15.3448 9.41406 16.537 9.90792 17.4161 10.787C18.2952 11.6661 18.7891 12.8584 18.7891 14.1016C18.7891 15.3448 18.2952 16.537 17.4161 17.4161C16.537 18.2952 15.3448 18.7891 14.1016 18.7891C12.8584 18.7891 11.6661 18.2952 10.787 17.4161Z" fill="#4F4F4F" stroke="#4F4F4F" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M16.1907 12.7391L13.9211 15.7648C13.8707 15.8319 13.8065 15.8873 13.7329 15.9275C13.6592 15.9676 13.5778 15.9915 13.4941 15.9975C13.4105 16.0035 13.3265 15.9914 13.2479 15.9622C13.1692 15.933 13.0978 15.8873 13.0383 15.8281L11.8665 14.6562" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <path id="payments-badge-circle" d="M10.787 17.4161C9.90792 16.537 9.41406 15.3448 9.41406 14.1016C9.41406 12.8584 9.90792 11.6661 10.787 10.787C11.6661 9.90792 12.8584 9.41406 14.1016 9.41406C15.3448 9.41406 16.537 9.90792 17.4161 10.787C18.2952 11.6661 18.7891 12.8584 18.7891 14.1016C18.7891 15.3448 18.2952 16.537 17.4161 17.4161C16.537 18.2952 15.3448 18.7891 14.1016 18.7891C12.8584 18.7891 11.6661 18.2952 10.787 17.4161Z" fill="#4F4F4F" stroke="#4F4F4F" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <path id="payments-badge-check" d="M16.1907 12.7391L13.9211 15.7648C13.8707 15.8319 13.8065 15.8873 13.7329 15.9275C13.6592 15.9676 13.5778 15.9915 13.4941 15.9975C13.4105 16.0035 13.3265 15.9914 13.2479 15.9622C13.1692 15.933 13.0978 15.8873 13.0383 15.8281L11.8665 14.6562" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <g id="payments-badge-exclaim" class="hidden">
+          <line x1="14.1" y1="11.4" x2="14.1" y2="14.7" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="14.1" cy="16.6" r="0.75" fill="white"/>
+        </g>
         <path d="M16.4453 7.07031V2.38281C16.4453 2.07201 16.3218 1.77394 16.1021 1.55417C15.8823 1.3344 15.5842 1.21094 15.2734 1.21094H2.38281C2.07201 1.21094 1.77394 1.3344 1.55417 1.55417C1.3344 1.77394 1.21094 2.07201 1.21094 2.38281V11.7578C1.21094 12.0686 1.3344 12.3667 1.55417 12.5865C1.77394 12.8062 2.07201 12.9297 2.38281 12.9297H7.07031" stroke="#4F4F4F" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M1.21094 4.72656H16.4453" stroke="#4F4F4F" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M3.55469 7.65625H8.24219" stroke="#4F4F4F" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
@@ -600,8 +626,14 @@
 
     <p class="settings-section-title">Zahlungsmittel auf diesem Gerät</p>
     <div id="payments-card-status">
+      <div class="card-display hidden" id="card-display">
+        <span class="card-brand-badge" id="card-brand-badge">CARD</span>
+        <span class="card-number" id="card-number-text">XXXX XXXX XXXX 0000</span>
+      </div>
       <p class="settings-hint" id="payments-card-text">Kein Zahlungsmittel hinterlegt.</p>
+      <p class="settings-hint">Die Kartendaten werden nur lokal auf diesem Gerät gespeichert — die eigentlichen Kartendaten liegen ausschließlich bei Stripe, nie auf unserem Server.</p>
       <button class="settings-reset" id="payments-forget-card">Karte vergessen</button>
+      <button class="settings-charge" id="payments-add-card">Karte hinterlegen</button>
     </div>
 
     <hr class="settings-divider">
@@ -943,6 +975,7 @@ function showPayCardGate() {
       }
 
       savePayerInfo(setupData.customerId, pmId, cardBrand, cardLast4);
+      updatePaymentsIconStatus();
       document.getElementById('pay-card-gate').classList.add('hidden');
       document.getElementById('pay-amount-card').classList.remove('hidden');
       document.querySelector('.pay-controls').classList.remove('hidden');
@@ -1061,15 +1094,34 @@ async function saveSettings() {
 function renderPaymentsCardStatus() {
   const text = document.getElementById('payments-card-text');
   const forgetBtn = document.getElementById('payments-forget-card');
+  const addBtn = document.getElementById('payments-add-card');
+  const display = document.getElementById('card-display');
+  const badge = document.getElementById('card-brand-badge');
+  const numberText = document.getElementById('card-number-text');
+
   if (hasPayerCard()) {
     const { cardBrand, cardLast4 } = getPayerInfo();
-    const brandLabel = cardBrand ? cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1) : 'Karte';
-    text.textContent = cardLast4 ? `${brandLabel} •••• ${cardLast4}` : `${brandLabel} hinterlegt`;
+    badge.textContent = cardBrand ? cardBrand.toUpperCase() : 'KARTE';
+    badge.className = 'card-brand-badge' + (cardBrand ? ` ${cardBrand.toLowerCase()}` : '');
+    numberText.textContent = cardLast4 ? `XXXX XXXX XXXX ${cardLast4}` : 'XXXX XXXX XXXX XXXX';
+    display.classList.remove('hidden');
+    text.classList.add('hidden');
     forgetBtn.classList.remove('hidden');
+    addBtn.classList.add('hidden');
   } else {
+    display.classList.add('hidden');
+    text.classList.remove('hidden');
     text.textContent = 'Kein Zahlungsmittel hinterlegt. Wird beim nächsten Einzahlen abgefragt.';
     forgetBtn.classList.add('hidden');
+    addBtn.classList.remove('hidden');
   }
+  updatePaymentsIconStatus();
+}
+
+function goToCardCapture() {
+  closePaymentsOverlay();
+  history.pushState(null, '', `/jar/${jarId}/pay`);
+  openPaymentSheet();
 }
 
 function openPaymentsOverlay() {
@@ -1093,6 +1145,16 @@ function forgetCard() {
   if (!confirmed) return;
   forgetPayerCard();
   renderPaymentsCardStatus();
+}
+
+function updatePaymentsIconStatus() {
+  const hasCard = !DEMO_MODE ? hasPayerCard() : true;
+  const color = hasCard ? '#4F4F4F' : '#D64545';
+  const circle = document.getElementById('payments-badge-circle');
+  circle.setAttribute('fill', color);
+  circle.setAttribute('stroke', color);
+  document.getElementById('payments-badge-check').classList.toggle('hidden', !hasCard);
+  document.getElementById('payments-badge-exclaim').classList.toggle('hidden', hasCard);
 }
 
 async function saveThreshold() {
@@ -1208,6 +1270,7 @@ async function finishOnboarding() {
 let dashboardDataPromise;
 
 function initDashboard() {
+  updatePaymentsIconStatus();
   document.getElementById('einzahlen-btn').onclick = () => {
     history.pushState({ pay: true }, '', `/jar/${jarId}/pay`);
     openPaymentSheet();
@@ -1236,6 +1299,7 @@ function initDashboard() {
   document.getElementById('settings-save-threshold').onclick = saveThreshold;
   document.getElementById('settings-charge-now').onclick = chargeNow;
   document.getElementById('payments-forget-card').onclick = forgetCard;
+  document.getElementById('payments-add-card').onclick = goToCardCapture;
 
   if (DEMO_MODE) {
     currentJar = DEMO_JAR;
