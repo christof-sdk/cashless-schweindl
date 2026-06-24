@@ -18,8 +18,15 @@ Guidance for Claude Code when working in this repository.
 ## Routing
 
 - `/jar/{id}` → dashboard, `/jar/{id}/pay` → payment screen, both rewritten to `index.html` via `vercel.json`; the page parses `window.location.pathname` itself
+- `/` redirects (307, via `vercel.json`) to a specific jar's payment screen — there's no landing page, the root URL is just a convenience shortcut
 - `jarId` defaults to `'demo'` only when the path doesn't match (used for local testing fallback)
 - `DEMO_MODE` is `true` only when `FIREBASE_CONFIG.apiKey` still starts with `REPLACE` (i.e., Firebase was never configured) — once real keys are in, every jar (including `demo`) goes through the live Firebase listener
+
+## Access Model
+
+- **No site-wide password** (the previous `middleware.js` Basic Auth gate was deliberately removed) and **no per-jar login** — the only protections are `<meta name="robots" content="noindex, nofollow">` plus `robots.txt` (`Disallow: /`), which stop legitimate search engines from indexing jar URLs, and the `jarId` itself acting as the de facto access secret. This is accepted as sufficient for the household/family use case: anyone with a jar's link can view its dashboard, tap to pay, and use Settings/"Zahlungen verwalten" (including "Jetzt abrechnen") for that jar — there's no concept of a jar "owner" distinct from "anyone who has the link," by design.
+- `noindex`/`robots.txt` are **not** access control — they only stop compliant crawlers, not anyone who already has a direct link. New jars should still get long, non-sequential, hard-to-guess IDs when created in the Firebase Console, since the ID is the only thing standing between "have the link" and "don't."
+- `/api/*` endpoints were already public before this change (intentionally, for hardware/webhook reachability) — removing the password didn't change their exposure, only the dashboard UI's.
 
 ## Onboarding & Reset
 
@@ -55,7 +62,6 @@ Billing decisions are made **per payer, never jar-wide** — Stripe charges a fe
 
 - `/api/stripe-webhook.js` verifies Stripe's signature manually (HMAC-SHA256 over `{timestamp}.{rawBody}`, via Node's built-in `crypto` — no `stripe` npm package, consistent with the rest of `api/`) and reconciles taps left in `'charging'` on `payment_intent.succeeded` (→ `confirmed`) or `payment_intent.payment_failed`/`canceled` (→ back to `'pending'`, only if still `'charging'`). This is a safety net for async edge cases (e.g. a `processing` intent, or `charge-jar` crashing between creating the intent and patching tap status) — the synchronous path in `charge-jar.js` still handles the common case directly. Requires `STRIPE_WEBHOOK_SECRET` (from the Stripe Dashboard webhook endpoint config) as an env var.
 - `/api/setup-intent.js` is rate-limited per IP (20/hour, generous enough for several guests on shared household/event WiFi) via `/api/_rateLimit.js`, which stores counters in Firebase under `rateLimits/` using the database secret — that path has no client-facing DB rule, so it's server-only.
-- `middleware.js` excludes `api/` from the Basic Auth gate so these endpoints (including the webhook) are reachable without the site password.
 - Monitoring for unusual charges is intentionally **not** custom-built — use Stripe Dashboard's built-in email notifications (failed payments / disputes) and Radar rules instead.
 
 ## Top Bar & Action Sheets (Dashboard)
@@ -73,7 +79,7 @@ Billing decisions are made **per payer, never jar-wide** — Stripe charges a fe
 
 ## Testing Notes
 
-- Local `npx serve` cannot run the `api/*.js` serverless functions — those only work once deployed to Vercel. Test them live via `curl` against `https://cashless-schweindl.vercel.app/api/...` (no password needed, see middleware note above).
+- Local `npx serve` cannot run the `api/*.js` serverless functions — those only work once deployed to Vercel. Test them live via `curl` against `https://cashless-schweindl.vercel.app/api/...`.
 - Local `serve` also doesn't reliably apply the `/jar/:id` rewrites from `serve.json` when run from the parent multi-project directory — load `index.html` directly and drive state via `db.ref(...)` in the console, or run `serve` rooted in this directory specifically.
 - Firebase Realtime Database rules are defined in `database.rules.json` (schema validation + `payerProfiles` locked to owner `auth.uid`) — **must be manually pasted into the Firebase Console → Realtime Database → Rules and published**; nothing in this repo deploys them automatically (no Firebase CLI/service account wired up). `/jars/*` itself is still open read/write (by design — there's no per-jar auth concept), but Stripe identities no longer live there.
 

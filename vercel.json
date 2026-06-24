@@ -1,4 +1,7 @@
 {
+  "redirects": [
+    { "source": "/", "destination": "/jar/49006b6473/pay", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/jar/:id", "destination": "/index.html" },
     { "source": "/jar/:id/pay", "destination": "/index.html" }
