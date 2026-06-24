@@ -15,14 +15,30 @@ async function patchJar(jarId, updates) {
   return res.json();
 }
 
-// payerProfiles/{uid} is locked down to auth.uid === $uid in the DB rules, so reading
-// it from the server (which has no Firebase Auth session) requires the database secret
-// to bypass rules — this is the one place server code needs elevated access.
-async function getPayerProfile(uid) {
+// Generic helpers for paths locked down to server-only access in the DB rules
+// (payerProfiles is restricted to auth.uid === $uid, rateLimits has no client
+// rule at all) — the database secret bypasses rules entirely, so these must
+// only ever be used server-side, never exposed to the client.
+async function getPrivileged(path) {
   const secret = process.env.FIREBASE_DATABASE_SECRET;
   if (!secret) throw new Error('FIREBASE_DATABASE_SECRET ist nicht gesetzt');
-  const res = await fetch(`${FIREBASE_URL}/payerProfiles/${uid}.json?auth=${secret}`);
+  const res = await fetch(`${FIREBASE_URL}/${path}.json?auth=${secret}`);
   return res.json();
 }
 
-module.exports = { getJar, patchJar, getPayerProfile };
+async function setPrivileged(path, data) {
+  const secret = process.env.FIREBASE_DATABASE_SECRET;
+  if (!secret) throw new Error('FIREBASE_DATABASE_SECRET ist nicht gesetzt');
+  const res = await fetch(`${FIREBASE_URL}/${path}.json?auth=${secret}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+async function getPayerProfile(uid) {
+  return getPrivileged(`payerProfiles/${uid}`);
+}
+
+module.exports = { getJar, patchJar, getPayerProfile, getPrivileged, setPrivileged };

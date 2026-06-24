@@ -127,6 +127,7 @@ module.exports = async (req, res) => {
           off_session: true,
           confirm: true,
           description: `Cashless Schweindl Abrechnung: ${jar.name || jarId}`,
+          metadata: { jarId, tapKeys: group.tapKeys.join(',') },
         });
 
         if (paymentIntent.status === 'succeeded') {
@@ -134,6 +135,12 @@ module.exports = async (req, res) => {
           group.tapKeys.forEach((key) => { updates[`taps/${key}/status`] = 'confirmed'; });
           await patchJar(jarId, updates);
           results.push({ charged: group.sum, status: 'succeeded' });
+        } else if (paymentIntent.status === 'processing') {
+          // Not yet final — leave taps 'charging' rather than reverting to 'pending',
+          // otherwise the next auto-charge run could fire a second PaymentIntent for
+          // the same money while this one is still in flight. The webhook resolves
+          // these to 'confirmed' or back to 'pending' once Stripe reports the outcome.
+          results.push({ charged: 0, status: 'processing' });
         } else {
           const revert = {};
           group.tapKeys.forEach((key) => { revert[`taps/${key}/status`] = 'pending'; });
