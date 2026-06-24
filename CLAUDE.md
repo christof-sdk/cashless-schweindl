@@ -93,7 +93,7 @@ Today there is exactly **one** Stripe account for the whole deployment — every
 ## Asset Conventions
 
 - Icons/illustrations: inline SVG, always — see parent repo's `CLAUDE.md` for the general rule (strip Figma background rects / page-context wrappers, keep only the meaningful path).
-- **One deliberate exception:** `assets/pig-payment.png` — the payment-screen pig illustration is a raster screenshot of a hand drawing pasted into Figma, no vector source exists. User explicitly approved embedding it as `<img>` rather than tracing it. Revisit if a vector version ever becomes available.
+- **Former exception, now resolved:** the payment-screen pig illustration used to be `assets/pig-payment.png` (a raster screenshot of a hand drawing, no vector source). A vector version was added to Figma (node `87:283`) and is now embedded inline as SVG in `index.html` — `assets/pig-payment.png` is no longer referenced and can be removed.
 
 ## Testing Notes
 
