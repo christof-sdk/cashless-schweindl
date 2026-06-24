@@ -12,7 +12,8 @@
         "goal": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 100000" },
         "total": { ".validate": "newData.isNumber() && newData.val() >= 0" },
         "onboarded": { ".validate": "newData.isBoolean()" },
-        "collection": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "payoutAccountHolder": { ".validate": "newData.isString() && newData.val().length <= 100" },
+        "payoutAccountIban": { ".validate": "newData.isString() && newData.val().length <= 50" },
         "payoutThreshold": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1000" },
         "ownerUid": { ".validate": "!data.exists() && auth != null && newData.val() === auth.uid" },
 

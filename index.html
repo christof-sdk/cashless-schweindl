@@ -666,10 +666,12 @@
     </div>
 
     <div class="onboard-step hidden" id="onboard-step-2">
-      <p class="onboard-emoji">💳</p>
-      <h2 class="onboard-title">Wo soll das Geld gesammelt werden?</h2>
-      <input class="settings-input" id="onboard-collection" type="text" placeholder="PayPal.me-Link oder E-Mail">
-      <p class="onboard-hint">Optional — kann später ergänzt werden</p>
+      <p class="onboard-emoji">🏦</p>
+      <h2 class="onboard-title">Bankkonto verknüpfen</h2>
+      <p class="onboard-hint">Hierher wird das gesammelte Geld ausgezahlt. Identität und Kontoinhaberschaft werden automatisch geprüft.</p>
+      <input class="settings-input" id="onboard-payout-holder" type="text" placeholder="Kontoinhaber">
+      <input class="settings-input" id="onboard-payout-iban" type="text" placeholder="IBAN" style="margin-top:10px;">
+      <p class="onboard-hint" id="onboard-payout-status"></p>
     </div>
 
     <div class="onboard-step hidden" id="onboard-step-3">
@@ -1386,10 +1388,26 @@ function showOnboardStep(i) {
   document.getElementById('onboard-next').textContent = i === ONBOARD_STEPS - 1 ? 'Fertig' : 'Weiter';
 }
 
+// Reines Frontend-Mockup für einen Acceptance-Test — simuliert, wie sich eine
+// echte Kontoverknüpfung (z.B. Stripe Connect Embedded Onboarding) anfühlen würde,
+// ohne irgendeine echte Anbindung. Zeigt nur einen kurzen "wird geprüft"-Zustand.
+async function simulateAccountVerification() {
+  const status = document.getElementById('onboard-payout-status');
+  const nextBtn = document.getElementById('onboard-next');
+  nextBtn.disabled = true;
+  status.textContent = 'Konto wird geprüft …';
+  await new Promise(r => setTimeout(r, 900));
+  status.textContent = 'Konto verifiziert ✓';
+  await new Promise(r => setTimeout(r, 400));
+  nextBtn.disabled = false;
+}
+
 function initOnboarding() {
   document.getElementById('onboard-name').value = '';
   document.getElementById('onboard-goal').value = '';
-  document.getElementById('onboard-collection').value = '';
+  document.getElementById('onboard-payout-holder').value = '';
+  document.getElementById('onboard-payout-iban').value = '';
+  document.getElementById('onboard-payout-status').textContent = '';
   document.getElementById('onboard-settings-password').value = '';
   showOnboardStep(0);
   document.getElementById('onboard-back').onclick = () => {
@@ -1398,6 +1416,12 @@ function initOnboarding() {
   document.getElementById('onboard-next').onclick = async () => {
     if (onboardStep === 0 && !document.getElementById('onboard-name').value.trim()) return;
     if (onboardStep === 1 && !parseInt(document.getElementById('onboard-goal').value, 10)) return;
+    if (onboardStep === 2) {
+      const holder = document.getElementById('onboard-payout-holder').value.trim();
+      const iban = document.getElementById('onboard-payout-iban').value.trim();
+      if (!holder || !iban) return;
+      await simulateAccountVerification();
+    }
     if (onboardStep === 3 && !document.getElementById('onboard-settings-password').value) return;
     if (onboardStep < ONBOARD_STEPS - 1) {
       showOnboardStep(onboardStep + 1);
@@ -1410,12 +1434,16 @@ function initOnboarding() {
 async function finishOnboarding() {
   const name = document.getElementById('onboard-name').value.trim();
   const goal = parseInt(document.getElementById('onboard-goal').value, 10);
-  const collection = document.getElementById('onboard-collection').value.trim();
+  const payoutAccountHolder = document.getElementById('onboard-payout-holder').value.trim();
+  const payoutAccountIban = document.getElementById('onboard-payout-iban').value.trim();
   const settingsPassword = document.getElementById('onboard-settings-password').value;
   if (!name || !goal || !settingsPassword) return;
 
   const uid = await payerReadyPromise;
-  await db.ref(`jars/${jarId}`).set({ onboarded: true, name, goal, collection, total: 0, ownerUid: uid });
+  await db.ref(`jars/${jarId}`).set({
+    onboarded: true, name, goal, total: 0, ownerUid: uid,
+    payoutAccountHolder, payoutAccountIban,
+  });
   if (uid) await setSettingsPassword(settingsPassword);
 }
 

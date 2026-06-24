@@ -35,7 +35,7 @@ Guidance for Claude Code when working in this repository.
 ## Onboarding & Reset
 
 - `/jars/{id}.onboarded` (boolean) gates whether the dashboard/payment screen or the onboarding flow renders. Missing or `false` → onboarding.
-- Onboarding: 4 steps (name, savings goal, "where should the money be collected" — currently a free-text field for a PayPal.me link/email, **not** a real account connection; real payouts are deferred to Stripe — and a settings password, see Access Model).
+- Onboarding: 4 steps — name, savings goal, a **simulated** bank account link (`payoutAccountHolder`/`payoutAccountIban`, see Future Direction below), and a settings password (see Access Model).
 - "Schweinchen zurücksetzen" in Settings archives the full current jar to `/archive/{id}/{timestamp}` (not reachable from the UI, only directly in Firebase) and resets the live jar to `{onboarded: false}`.
 
 ## Payments (Stripe)
@@ -79,6 +79,7 @@ Today there is exactly **one** Stripe account for the whole deployment — every
 - `charge-jar.js` would then route each jar's PaymentIntent to that jar's connected account (e.g. via `transfer_data`/destination charges) instead of the platform's own account.
 - **PayPal as a direct payout destination is not possible this way** — Stripe Connect only pays out to a bank account, never to a PayPal account. (Investigated and ruled out; see git history around 2026-06 for the reasoning if this gets re-raised.) If PayPal payout is ever a hard requirement, that would mean a separate bridge (collect via Stripe, track an internal ledger, periodically pay out via PayPal's own Payouts API) — meaningfully more complex than Connect, and not the current plan.
 - **Caveat for whoever implements this:** Stripe is in the process of replacing the legacy Express/Standard/Custom account-type model with a newer "Controller Properties" + Accounts v2 API approach. Re-check current Stripe docs before writing code here — don't trust older Express/Standard/Custom-specific examples (including from this very file, if it's gone stale by the time this gets built).
+- **A frontend-only mockup of this step already exists** (onboarding step 2, `index.html`) — purely for user acceptance testing of what info feels right to ask for, with **zero** real backend behind it: `simulateAccountVerification()` just shows a fake "wird geprüft…" delay, and the entered `payoutAccountHolder`/`payoutAccountIban` are stored as plain strings on the jar with no real Stripe Connect call, no real verification, no real IBAN format validation. **Don't treat this as a security boundary or real data store** — `jars/*` is openly readable, so don't let this mockup collect real banking details once people start actually using it; that has to happen for real once the actual Connect integration above replaces it.
 
 ## Top Bar & Action Sheets (Dashboard)
 
@@ -103,6 +104,6 @@ Today there is exactly **one** Stripe account for the whole deployment — every
 
 - Auto-billing only runs when someone has a jar's dashboard open (piggybacks on the Firebase listener) — a cron job would be needed so jars nobody revisits still get auto-billed once threshold/30 days is reached (the Stripe webhook covers async *confirmation* hardening, not the missing scheduler).
 - Empty-state design for the transaction list (currently just a plain "Noch keine Einzahlungen" text)
-- Real PayPal payout integration (currently just a text field) — or decide this is permanently out of scope in favor of Stripe
+- Real Stripe Connect integration to replace the onboarding step-2 mockup (see Future Direction under Payments) — PayPal payout was investigated and ruled out
 - Goal-reached state/animation + decide the follow-up user journey (trigger a payout? from where?)
 - Sound-on-tap and proximity/push settings (mentioned as future Settings additions, not yet built)
