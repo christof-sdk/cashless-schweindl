@@ -68,6 +68,18 @@ Billing decisions are made **per payer, never jar-wide** — Stripe charges a fe
 - `/api/setup-intent.js` is rate-limited per IP (20/hour, generous enough for several guests on shared household/event WiFi) via `/api/_rateLimit.js`, which stores counters in Firebase under `rateLimits/` using the database secret — that path has no client-facing DB rule, so it's server-only.
 - Monitoring for unusual charges is intentionally **not** custom-built — use Stripe Dashboard's built-in email notifications (failed payments / disputes) and Radar rules instead.
 
+### Future Direction: Per-Owner Payouts (not yet built)
+
+Today there is exactly **one** Stripe account for the whole deployment — every charge from every jar lands in whoever's `STRIPE_SECRET_KEY` is configured in Vercel. This is fine for a single-operator prototype, but doesn't work if "Cashless Schweindl" is ever sold/distributed to independent households who should each receive their own money.
+
+**Chosen direction once that's needed: Stripe Connect, embedded onboarding** (decided 2026-06, not implemented yet):
+
+- During onboarding, the jar owner connects their own bank account via Stripe's **embedded** Account Onboarding component — loaded the same way Stripe.js already is (a `<script>` include, no build step needed, consistent with the rest of this project), rendered inline in our own onboarding flow rather than redirecting out to a Stripe-hosted page.
+- Stripe handles all KYC (identity info, bank account/IBAN, country-specific documents) and bank account verification itself — this app never collects or sees that data directly, only gets back a connected `accountId` and a status (verified / pending / requires more info).
+- `charge-jar.js` would then route each jar's PaymentIntent to that jar's connected account (e.g. via `transfer_data`/destination charges) instead of the platform's own account.
+- **PayPal as a direct payout destination is not possible this way** — Stripe Connect only pays out to a bank account, never to a PayPal account. (Investigated and ruled out; see git history around 2026-06 for the reasoning if this gets re-raised.) If PayPal payout is ever a hard requirement, that would mean a separate bridge (collect via Stripe, track an internal ledger, periodically pay out via PayPal's own Payouts API) — meaningfully more complex than Connect, and not the current plan.
+- **Caveat for whoever implements this:** Stripe is in the process of replacing the legacy Express/Standard/Custom account-type model with a newer "Controller Properties" + Accounts v2 API approach. Re-check current Stripe docs before writing code here — don't trust older Express/Standard/Custom-specific examples (including from this very file, if it's gone stale by the time this gets built).
+
 ## Top Bar & Action Sheets (Dashboard)
 
 - Two icon buttons top-right (no bottom nav — tried and reverted): **Einstellungen** (gear, `right:18px`) and **Zahlungen verwalten** (card icon, `right:62px`, 16px left of the gear). Both open full-screen-ish bottom sheets (`#settings-overlay` / `#payments-overlay`), same slide-up pattern as the payment sheet.
