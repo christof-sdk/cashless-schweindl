@@ -672,10 +672,18 @@
       <p class="onboard-hint">Optional — kann später ergänzt werden</p>
     </div>
 
+    <div class="onboard-step hidden" id="onboard-step-3">
+      <p class="onboard-emoji">🔒</p>
+      <h2 class="onboard-title">Einstellungs-Passwort festlegen</h2>
+      <input class="settings-input" id="onboard-settings-password" type="password" placeholder="Passwort">
+      <p class="onboard-hint">Dieses Gerät wird automatisch erkannt — hier brauchst du das Passwort nie wieder. Andere Geräte müssen es eingeben, um Einstellungen zu ändern oder abzurechnen. Es gibt keine Passwort-Wiederherstellung — merk es dir gut oder schreib es dir auf.</p>
+    </div>
+
     <div class="onboard-dots">
       <span class="onboard-dot" data-step="0"></span>
       <span class="onboard-dot" data-step="1"></span>
       <span class="onboard-dot" data-step="2"></span>
+      <span class="onboard-dot" data-step="3"></span>
     </div>
   </div>
 
@@ -805,6 +813,107 @@ if (!DEMO_MODE) {
       }
       return uid;
     });
+}
+
+// ── SETTINGS AUTH (Owner-Gerät statt Account) ─────────────────────────────────
+// Es gibt keine Accounts. Stattdessen wird das Gerät, das ein Schweinchen einrichtet,
+// über seine Firebase-Anonymous-Auth-uid als "Owner-Gerät" markiert
+// (jars/{id}.ownerUid, einmalig setzbar, von den DB-Rules erzwungen) — auf diesem
+// Gerät ist nichts gesperrt. Jedes andere Gerät muss das beim Onboarding festgelegte
+// Einstellungs-Passwort eingeben. Der Passwort-Hash liegt unter settingsAuth/{id},
+// die DB-Rules erlauben dort nur Lesezugriff per Datenbank-Geheimnis (serverseitig,
+// siehe api/verify-settings-password.js) — kein Client kann den Hash je auslesen.
+let myUid = null;
+payerReadyPromise.then(uid => { myUid = uid; });
+
+let settingsUnlocked = false; // bleibt für die Dauer der Seiten-Session gültig, sobald einmal verifiziert
+
+function isOwnerDevice() {
+  return DEMO_MODE || (!!currentJar?.ownerUid && currentJar.ownerUid === myUid);
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+  return bytes;
+}
+
+const PBKDF2_ITERATIONS = 100000;
+async function hashSettingsPassword(password, saltHex) {
+  const salt = hexToBytes(saltHex);
+  const keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    keyMaterial,
+    256
+  );
+  return bytesToHex(new Uint8Array(bits));
+}
+
+// Nur das Owner-Gerät darf das (siehe settingsAuth-Rule) — wird beim Onboarding
+// und bei der nachträglichen Migration alter Schweinchen ohne ownerUid aufgerufen.
+async function setSettingsPassword(password) {
+  const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+  const salt = bytesToHex(saltBytes);
+  const hash = await hashSettingsPassword(password, salt);
+  await db.ref(`settingsAuth/${jarId}`).set({ hash, salt });
+}
+
+async function verifySettingsPassword(password) {
+  const res = await fetch('/api/verify-settings-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jarId, password }),
+  });
+  return res.json();
+}
+
+// Schweinchen, die vor diesem Feature eingerichtet wurden, haben noch kein
+// ownerUid — wird lazy beim ersten gesperrten Vorgang nachgeholt, statt das
+// erste beste Gerät, das die Seite öffnet, stillschweigend zum Owner zu machen.
+async function claimOwnershipFlow() {
+  const confirmed = confirm('Für dieses Schweinchen ist noch kein Owner-Gerät und kein Einstellungs-Passwort festgelegt. Dieses Gerät jetzt als Owner festlegen und ein Passwort vergeben?');
+  if (!confirmed) return false;
+  const password = prompt('Neues Einstellungs-Passwort für dieses Schweinchen:');
+  if (!password) return false;
+  try {
+    await db.ref(`jars/${jarId}`).update({ ownerUid: myUid });
+    await setSettingsPassword(password);
+    if (currentJar) currentJar.ownerUid = myUid;
+    return true;
+  } catch (e) {
+    alert('Owner-Festlegung fehlgeschlagen: ' + e.message);
+    return false;
+  }
+}
+
+// Zentrale Sperre für alle jar-verändernden Aktionen (Settings speichern, Reset,
+// Schwelle ändern, "Jetzt abrechnen"). Tap/Einzahlen und die eigene Karte sind
+// davon bewusst ausgenommen.
+async function withSettingsAuth(action) {
+  if (DEMO_MODE || isOwnerDevice() || settingsUnlocked) {
+    return action();
+  }
+  if (!currentJar?.ownerUid) {
+    const claimed = await claimOwnershipFlow();
+    if (claimed) return action();
+    return;
+  }
+  const password = prompt('Einstellungs-Passwort für dieses Schweinchen eingeben:');
+  if (!password) return;
+  try {
+    const result = await verifySettingsPassword(password);
+    if (result.valid) {
+      settingsUnlocked = true;
+      return action();
+    }
+    alert('Falsches Passwort.');
+  } catch (e) {
+    alert('Passwort-Prüfung fehlgeschlagen: ' + e.message);
+  }
 }
 
 // ── ROUTING ───────────────────────────────────────────────────────────────────
@@ -1254,12 +1363,17 @@ async function resetJar() {
   if (data) {
     await db.ref(`archive/${jarId}/${Date.now()}`).set(data);
   }
+  // Clean up the old settings password while this device is still the recognized
+  // owner — the write below clears ownerUid too, after which nobody could remove it
+  // anymore (the settingsAuth rule requires auth.uid === ownerUid). Harmless if this
+  // fails (e.g. triggered via the password-unlock path rather than the owner device).
+  await db.ref(`settingsAuth/${jarId}`).remove().catch(() => {});
   await db.ref(`jars/${jarId}`).set({ onboarded: false });
   closeSettings();
 }
 
 // ── ONBOARDING ────────────────────────────────────────────────────────────────
-const ONBOARD_STEPS = 3;
+const ONBOARD_STEPS = 4;
 let onboardStep = 0;
 
 function showOnboardStep(i) {
@@ -1276,6 +1390,7 @@ function initOnboarding() {
   document.getElementById('onboard-name').value = '';
   document.getElementById('onboard-goal').value = '';
   document.getElementById('onboard-collection').value = '';
+  document.getElementById('onboard-settings-password').value = '';
   showOnboardStep(0);
   document.getElementById('onboard-back').onclick = () => {
     if (onboardStep > 0) showOnboardStep(onboardStep - 1);
@@ -1283,6 +1398,7 @@ function initOnboarding() {
   document.getElementById('onboard-next').onclick = async () => {
     if (onboardStep === 0 && !document.getElementById('onboard-name').value.trim()) return;
     if (onboardStep === 1 && !parseInt(document.getElementById('onboard-goal').value, 10)) return;
+    if (onboardStep === 3 && !document.getElementById('onboard-settings-password').value) return;
     if (onboardStep < ONBOARD_STEPS - 1) {
       showOnboardStep(onboardStep + 1);
     } else {
@@ -1295,9 +1411,12 @@ async function finishOnboarding() {
   const name = document.getElementById('onboard-name').value.trim();
   const goal = parseInt(document.getElementById('onboard-goal').value, 10);
   const collection = document.getElementById('onboard-collection').value.trim();
-  if (!name || !goal) return;
+  const settingsPassword = document.getElementById('onboard-settings-password').value;
+  if (!name || !goal || !settingsPassword) return;
 
-  await db.ref(`jars/${jarId}`).set({ onboarded: true, name, goal, collection, total: 0 });
+  const uid = await payerReadyPromise;
+  await db.ref(`jars/${jarId}`).set({ onboarded: true, name, goal, collection, total: 0, ownerUid: uid });
+  if (uid) await setSettingsPassword(settingsPassword);
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -1323,15 +1442,15 @@ function initDashboard() {
   document.getElementById('settings-overlay').onclick = (e) => {
     if (e.target.id === 'settings-overlay') closeSettings();
   };
-  document.getElementById('settings-save').onclick = saveSettings;
-  document.getElementById('settings-reset').onclick = resetJar;
+  document.getElementById('settings-save').onclick = () => withSettingsAuth(saveSettings);
+  document.getElementById('settings-reset').onclick = () => withSettingsAuth(resetJar);
 
   document.getElementById('payments-cancel').onclick = closePaymentsOverlay;
   document.getElementById('payments-overlay').onclick = (e) => {
     if (e.target.id === 'payments-overlay') closePaymentsOverlay();
   };
-  document.getElementById('settings-save-threshold').onclick = saveThreshold;
-  document.getElementById('settings-charge-now').onclick = chargeNow;
+  document.getElementById('settings-save-threshold').onclick = () => withSettingsAuth(saveThreshold);
+  document.getElementById('settings-charge-now').onclick = () => withSettingsAuth(chargeNow);
   document.getElementById('payments-forget-card').onclick = forgetCard;
   document.getElementById('payments-add-card').onclick = goToCardCapture;
 

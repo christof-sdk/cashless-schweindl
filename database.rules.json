@@ -14,6 +14,7 @@
         "onboarded": { ".validate": "newData.isBoolean()" },
         "collection": { ".validate": "newData.isString() && newData.val().length <= 200" },
         "payoutThreshold": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1000" },
+        "ownerUid": { ".validate": "!data.exists() && auth != null && newData.val() === auth.uid" },
 
         "taps": {
           "$tapKey": {
@@ -42,6 +43,18 @@
         "paymentMethodId": { ".validate": "newData.isString() && newData.val().matches(/^pm_[A-Za-z0-9]+$/)" },
         "cardBrand": { ".validate": "newData.isString()" },
         "cardLast4": { ".validate": "newData.isString()" },
+
+        "$other": { ".validate": false }
+      }
+    },
+
+    "settingsAuth": {
+      "$jarId": {
+        ".read": false,
+        ".write": "auth != null && auth.uid === root.child('jars/' + $jarId + '/ownerUid').val()",
+
+        "hash": { ".validate": "newData.isString() && newData.val().matches(/^[a-f0-9]{64}$/)" },
+        "salt": { ".validate": "newData.isString() && newData.val().matches(/^[a-f0-9]{32}$/)" },
 
         "$other": { ".validate": false }
       }
