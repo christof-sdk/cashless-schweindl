@@ -68,14 +68,6 @@
       text-decoration: underline; cursor: pointer;
     }
 
-    .tx-delete {
-      display: block; margin: 4px auto 4px;
-      background: none; border: none;
-      color: #b35c4a; font-family: 'Lato', sans-serif;
-      font-size: clamp(14px, 4vw, 17px); font-weight: 700;
-      text-decoration: underline; cursor: pointer;
-    }
-
     .einzahlen-btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       background: #5e5e5e; border: 1px solid #4f4f4f; border-radius: 56px;
@@ -875,31 +867,12 @@ function renderTxList() {
   const toggleHtml = txList.length > TX_PAGE_SIZE
     ? `<button class="tx-toggle" id="tx-toggle">${txExpanded ? 'Weniger anzeigen' : 'Ältere anzeigen'}</button>`
     : '';
-  const deleteHtml = txExpanded
-    ? `<button class="tx-delete" id="tx-delete">Einträge löschen</button>`
-    : '';
-  el.innerHTML = itemsHtml + toggleHtml + deleteHtml;
+  el.innerHTML = itemsHtml + toggleHtml;
   if (txList.length > TX_PAGE_SIZE) {
     document.getElementById('tx-toggle').onclick = () => {
       txExpanded = !txExpanded;
       renderTxList();
     };
-  }
-  if (txExpanded) {
-    document.getElementById('tx-delete').onclick = clearTaps;
-  }
-}
-
-async function clearTaps() {
-  const confirmed = confirm('Möchten Sie wirklich alle Einträge löschen? Das Geld bleibt dabei natürlich am Sparschwein.');
-  if (!confirmed) return;
-
-  if (!DEMO_MODE) {
-    await db.ref(`jars/${jarId}/taps`).remove();
-  } else {
-    txList = [];
-    txExpanded = false;
-    renderTxList();
   }
 }
 
@@ -1014,9 +987,20 @@ function showPayCardGate() {
       if (result.error) throw new Error(result.error.message);
 
       const pmId = result.setupIntent.payment_method;
+
+      // Bind customerId/paymentMethodId to this device's uid *before* asking for
+      // brand/last4 — payment-method-info.js then proves ownership by reading this
+      // profile itself, rather than trusting a client-supplied paymentMethodId
+      // (which an older, pre-migration tap could otherwise have leaked for someone
+      // else's card).
+      const uid = !DEMO_MODE ? await payerReadyPromise : null;
+      if (!DEMO_MODE && uid) {
+        await db.ref(`payerProfiles/${uid}`).set({ customerId: setupData.customerId, paymentMethodId: pmId });
+      }
+
       let cardBrand = null, cardLast4 = null;
       try {
-        const infoRes = await fetch(`/api/payment-method-info?id=${pmId}`);
+        const infoRes = await fetch(`/api/payment-method-info?uid=${uid}`);
         const info = await infoRes.json();
         cardBrand = info.brand;
         cardLast4 = info.last4;
