@@ -18,7 +18,7 @@ Guidance for Claude Code when working in this repository.
 ## Routing
 
 - `/jar/{id}` → dashboard, `/jar/{id}/pay` → payment screen, both rewritten to `index.html` via `vercel.json`; the page parses `window.location.pathname` itself
-- `/` redirects (307, via `vercel.json`) to a specific jar's payment screen — there's no landing page, the root URL is just a convenience shortcut
+- `/` redirects (307, via `vercel.json`) to a specific jar's payment screen — there's no landing page, the root URL is just a convenience shortcut. **⚠️ Currently points at a real jar (`/jar/49006b6473/pay`), added purely for testing convenience — remove this redirect entry from `vercel.json` before go-live**, so `/` doesn't silently forward visitors into someone's live jar.
 - `jarId` defaults to `'demo'` only when the path doesn't match (used for local testing fallback)
 - `DEMO_MODE` is `true` only when `FIREBASE_CONFIG.apiKey` still starts with `REPLACE` (i.e., Firebase was never configured) — once real keys are in, every jar (including `demo`) goes through the live Firebase listener
 
@@ -108,3 +108,4 @@ Today there is exactly **one** Stripe account for the whole deployment — every
 - Real Stripe Connect integration to replace the onboarding step-2 mockup (see Future Direction under Payments) — PayPal payout was investigated and ruled out
 - Goal-reached state/animation + decide the follow-up user journey (trigger a payout? from where?)
 - Sound-on-tap and proximity/push settings (mentioned as future Settings additions, not yet built)
+- **Before go-live: remove the `/` → `/jar/49006b6473/pay` redirect in `vercel.json`** (see Routing section) — a testing convenience that must not ship, since it currently forwards every bare visit to the root domain into a specific real jar.
