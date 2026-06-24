@@ -632,6 +632,8 @@
     <hr class="settings-divider">
     <p class="settings-section-title">Abrechnung für dieses Schweinchen</p>
 
+    <p class="settings-hint hidden" id="payout-account-text"></p>
+
     <label class="settings-label" for="settings-threshold">Mindestbetrag pro Person für Abrechnung</label>
     <div class="settings-goal-wrap">
       <input class="settings-input" id="settings-threshold" type="number" min="1" step="1" placeholder="15">
@@ -1273,6 +1275,16 @@ function openPaymentsOverlay() {
   document.getElementById('settings-threshold').value = currentJar?.payoutThreshold || 15;
   document.getElementById('charge-status').textContent = '';
   renderPaymentsCardStatus();
+
+  // Nur das Owner-Gerät sieht, wohin abgerechnetes Geld geht — andere Geräte mit
+  // dem Link sollen das Auszahlungsziel nicht einsehen können.
+  const payoutText = document.getElementById('payout-account-text');
+  if (isOwnerDevice() && currentJar?.payoutAccountIban) {
+    payoutText.textContent = `Auszahlungsziel: ${currentJar.payoutAccountHolder || ''} · ${currentJar.payoutAccountIban}`;
+    payoutText.classList.remove('hidden');
+  } else {
+    payoutText.classList.add('hidden');
+  }
 
   const overlay = document.getElementById('payments-overlay');
   overlay.classList.remove('hidden');
