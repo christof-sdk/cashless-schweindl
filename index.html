@@ -629,21 +629,23 @@
       <button class="settings-charge" id="payments-add-card">Karte hinterlegen</button>
     </div>
 
-    <hr class="settings-divider">
-    <p class="settings-section-title">Abrechnung für dieses Schweinchen</p>
+    <div id="billing-section">
+      <hr class="settings-divider">
+      <p class="settings-section-title">Abrechnung für dieses Schweinchen</p>
 
-    <p class="settings-hint hidden" id="payout-account-text"></p>
+      <p class="settings-hint hidden" id="payout-account-text"></p>
 
-    <label class="settings-label" for="settings-threshold">Mindestbetrag pro Person für Abrechnung</label>
-    <div class="settings-goal-wrap">
-      <input class="settings-input" id="settings-threshold" type="number" min="1" step="1" placeholder="15">
-      <span class="settings-suffix">€</span>
+      <label class="settings-label" for="settings-threshold">Mindestbetrag pro Person für Abrechnung</label>
+      <div class="settings-goal-wrap">
+        <input class="settings-input" id="settings-threshold" type="number" min="1" step="1" placeholder="15">
+        <span class="settings-suffix">€</span>
+      </div>
+      <p class="settings-hint">Jede Person wird abgerechnet, sobald ihr eigener offener Betrag diese Summe erreicht — spätestens aber nach 30 Tagen.</p>
+
+      <button class="settings-save" id="settings-save-threshold">Speichern</button>
+      <button class="settings-charge" id="settings-charge-now" type="button">Jetzt abrechnen</button>
+      <p class="settings-hint" id="charge-status"></p>
     </div>
-    <p class="settings-hint">Jede Person wird abgerechnet, sobald ihr eigener offener Betrag diese Summe erreicht — spätestens aber nach 30 Tagen.</p>
-
-    <button class="settings-save" id="settings-save-threshold">Speichern</button>
-    <button class="settings-charge" id="settings-charge-now" type="button">Jetzt abrechnen</button>
-    <p class="settings-hint" id="charge-status"></p>
 
     <button class="settings-cancel" id="payments-cancel">Schließen</button>
   </div>
@@ -1276,10 +1278,15 @@ function openPaymentsOverlay() {
   document.getElementById('charge-status').textContent = '';
   renderPaymentsCardStatus();
 
-  // Nur das Owner-Gerät sieht, wohin abgerechnetes Geld geht — andere Geräte mit
-  // dem Link sollen das Auszahlungsziel nicht einsehen können.
+  // Schwelle/"Jetzt abrechnen"/Auszahlungsziel sind reine Owner-Angelegenheiten —
+  // Kartendaten dagegen hängen am jeweiligen Zahler, bleiben also für alle sichtbar.
+  // Legacy-Jars ohne ownerUid müssen den Bereich trotzdem sehen, sonst kann nie
+  // jemand den "Owner werden"-Dialog (claimOwnershipFlow) anstoßen.
+  const owner = isOwnerDevice();
+  const unclaimed = !currentJar?.ownerUid;
+  document.getElementById('billing-section').classList.toggle('hidden', !owner && !unclaimed);
   const payoutText = document.getElementById('payout-account-text');
-  if (isOwnerDevice() && currentJar?.payoutAccountIban) {
+  if (owner && currentJar?.payoutAccountIban) {
     payoutText.textContent = `Auszahlungsziel: ${currentJar.payoutAccountHolder || ''} · ${currentJar.payoutAccountIban}`;
     payoutText.classList.remove('hidden');
   } else {
