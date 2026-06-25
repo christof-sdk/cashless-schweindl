@@ -15,6 +15,7 @@
         "payoutAccountHolder": { ".validate": "newData.isString() && newData.val().length <= 100" },
         "payoutAccountIban": { ".validate": "newData.isString() && newData.val().length <= 50" },
         "payoutThreshold": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1000" },
+        "colorScheme": { ".validate": "newData.isString() && (newData.val() == '1' || newData.val() == '2')" },
         "ownerUid": { ".validate": "!data.exists() && auth != null && newData.val() === auth.uid" },
 
         "taps": {
