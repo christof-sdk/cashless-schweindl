@@ -1942,13 +1942,14 @@ async function finishOnboarding() {
   if (uid) await setSettingsPassword(settingsPassword);
 }
 
-// ── USER-ONBOARDING (pro Gerät, einmalig, unabhängig vom jeweiligen Schwein) ──
+// ── USER-ONBOARDING (pro Gerät, unabhängig vom jeweiligen Schwein) ───────────
 // Läuft nach dem Schwein-Onboarding für jedes Gerät, das noch keinen
-// Anzeigenamen gesetzt hat — egal ob es das erste oder das zehnte Schwein
-// dieses Geräts ist. Die Karte ist hier bewusst überspringbar (anders als das
-// pflichtige pay-card-gate beim ersten echten Tap).
+// Anzeigenamen ODER noch keine Karte hinterlegt hat — egal ob es das erste
+// oder das zehnte Schwein dieses Geräts ist, und wiederholt sich bei jedem
+// Seitenaufruf, solange keine Karte hinterlegt ist. Die Karte ist hier bewusst
+// überspringbar (anders als das pflichtige pay-card-gate beim ersten echten Tap).
 function needsUserOnboarding() {
-  return !DEMO_MODE && !getDisplayName();
+  return !DEMO_MODE && (!getDisplayName() || !hasPayerCard());
 }
 
 const USER_ONBOARD_STEPS = 2;
@@ -1995,7 +1996,7 @@ async function saveUserOnboardCard() {
 }
 
 function initUserOnboarding(onComplete) {
-  document.getElementById('user-onboard-name').value = '';
+  document.getElementById('user-onboard-name').value = getDisplayName() || '';
   document.getElementById('user-onboard-card-status').textContent = '';
   showUserOnboardStep(0);
 
