@@ -22,6 +22,7 @@
       --c-pill-border: #4f4f4f;
       --c-icon: #340068;
       --c-panel-text: #fffcf9;
+      --c-panel-secondary: #b0b0b0;
       --c-panel-text-muted: rgba(255,252,249,0.55);
       --c-panel-text-muted-2: rgba(255,252,249,0.85);
       --c-panel-btn-bg: #fffcf9;
@@ -65,6 +66,7 @@
       --c-pill-border: #000000;
       --c-icon: #fffcf9;
       --c-panel-text: #000000;
+      --c-panel-secondary: #6b6b6b;
       --c-panel-text-muted: rgba(0,0,0,0.45);
       --c-panel-text-muted-2: rgba(0,0,0,0.7);
       --c-panel-btn-bg: #4b3f72;
@@ -148,10 +150,14 @@
 
     .tx-list { flex: 1; padding: 16px 46px 96px; }
 
-    .tx-item { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; }
-    .tx-date  { font-size: clamp(15px, 4.5vw, 20px); font-weight: 400; color: var(--c-panel-text); }
-    .tx-amt   { font-size: clamp(15px, 4.5vw, 20px); font-weight: 700; color: var(--c-panel-text); }
-    .tx-amt.pending { opacity: 0.4; }
+    .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+    .tx-item.pending { opacity: 0.6; }
+    .tx-left { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .tx-name { font-size: clamp(15px, 4.5vw, 20px); font-weight: 700; color: var(--c-panel-text); }
+    .tx-date-row { display: flex; align-items: center; gap: 4px; color: var(--c-panel-secondary); }
+    .tx-date  { font-size: clamp(13px, 3.8vw, 16px); font-weight: 400; }
+    .tx-clock { width: 12px; height: 12px; flex-shrink: 0; }
+    .tx-amt   { font-size: clamp(15px, 4.5vw, 20px); font-weight: 700; color: var(--c-panel-text); flex-shrink: 0; }
     .tx-empty { color: var(--c-panel-text-muted); text-align: center; padding: 28px 0; font-size: 17px; }
 
     .tx-toggle {
@@ -669,6 +675,7 @@
 
   <div id="pay-card-gate" class="pay-card-gate hidden">
     <p class="pay-card-gate-title">Bevor du einzahlst:<br>Karte hinterlegen</p>
+    <input class="settings-input" id="pay-card-screenname" type="text" placeholder="Dein Anzeigename (z.B. Vorname)" style="margin-bottom:10px;">
     <div class="settings-card-element" id="pay-card-element"></div>
     <button class="settings-charge" id="pay-save-card" type="button">Karte speichern & weiter</button>
     <p class="settings-hint" id="pay-card-status"></p>
@@ -884,13 +891,15 @@ function getPayerInfo() {
     paymentMethodId: localStorage.getItem('payerPaymentMethodId'),
     cardBrand: localStorage.getItem('payerCardBrand'),
     cardLast4: localStorage.getItem('payerCardLast4'),
+    screenName: localStorage.getItem('payerScreenName'),
   };
 }
-async function savePayerInfo(customerId, paymentMethodId, cardBrand, cardLast4) {
+async function savePayerInfo(customerId, paymentMethodId, cardBrand, cardLast4, screenName) {
   localStorage.setItem('payerCustomerId', customerId);
   localStorage.setItem('payerPaymentMethodId', paymentMethodId);
   if (cardBrand) localStorage.setItem('payerCardBrand', cardBrand);
   if (cardLast4) localStorage.setItem('payerCardLast4', cardLast4);
+  if (screenName) localStorage.setItem('payerScreenName', screenName);
   if (!DEMO_MODE) {
     const uid = await payerReadyPromise;
     if (uid) {
@@ -898,12 +907,13 @@ async function savePayerInfo(customerId, paymentMethodId, cardBrand, cardLast4) 
         customerId, paymentMethodId,
         cardBrand: cardBrand || null,
         cardLast4: cardLast4 || null,
+        screenName: screenName || null,
       });
     }
   }
 }
 function forgetPayerCard() {
-  ['payerCustomerId', 'payerPaymentMethodId', 'payerCardBrand', 'payerCardLast4'].forEach(k => localStorage.removeItem(k));
+  ['payerCustomerId', 'payerPaymentMethodId', 'payerCardBrand', 'payerCardLast4', 'payerScreenName'].forEach(k => localStorage.removeItem(k));
   if (!DEMO_MODE) {
     payerReadyPromise.then(uid => {
       if (uid) return db.ref(`payerProfiles/${uid}`).remove();
@@ -934,10 +944,10 @@ const DEMO_JAR = {
   total: 75,
   colorScheme: '1',
   taps: {
-    a: { amount: 2, timestamp: Date.now() - 3.6e6,    status: 'confirmed' },
-    b: { amount: 1, timestamp: Date.now() - 7.2e6,    status: 'confirmed' },
-    c: { amount: 4, timestamp: Date.now() - 97.2e6,   status: 'confirmed' },
-    d: { amount: 1, timestamp: Date.now() - 345.6e6,  status: 'confirmed' },
+    a: { amount: 2, timestamp: Date.now() - 3.6e4,    status: 'pending',   payerName: 'Connie' },
+    b: { amount: 1, timestamp: Date.now() - 7.2e6,    status: 'pending',   payerName: 'Christof' },
+    c: { amount: 4, timestamp: Date.now() - 97.2e6,   status: 'confirmed', payerName: 'Klara' },
+    d: { amount: 1, timestamp: Date.now() - 345.6e6,  status: 'confirmed', payerName: 'Connie' },
     e: { amount: 1, timestamp: Date.now() - 604.8e6,  status: 'confirmed' },
     f: { amount: 1, timestamp: Date.now() - 950.4e6,  status: 'confirmed' },
     g: { amount: 1, timestamp: Date.now() - 1641.6e6, status: 'confirmed' },
@@ -962,7 +972,7 @@ if (!DEMO_MODE) {
     .catch(e => { console.error('Anonyme Anmeldung fehlgeschlagen:', e); return null; })
     .then(async (uid) => {
       if (!uid) return null;
-      const { customerId, paymentMethodId, cardBrand, cardLast4 } = getPayerInfo();
+      const { customerId, paymentMethodId, cardBrand, cardLast4, screenName } = getPayerInfo();
       if (customerId && paymentMethodId) {
         try {
           const snap = await db.ref(`payerProfiles/${uid}`).once('value');
@@ -971,6 +981,7 @@ if (!DEMO_MODE) {
               customerId, paymentMethodId,
               cardBrand: cardBrand || null,
               cardLast4: cardLast4 || null,
+              screenName: screenName || null,
             });
           }
         } catch (e) {
@@ -1138,6 +1149,17 @@ const TX_PAGE_SIZE = 5;
 let txList = [];
 let txExpanded = false;
 
+// payerName is free text entered by a payer's own device (see screenName in
+// savePayerInfo) and gets rendered into every viewer's tx list — escape it to
+// rule out stored XSS via a malicious display name.
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+const CLOCK_ICON_SVG = '<svg class="tx-clock" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 0C7.5913 5.921e-09 9.11697 0.632594 10.2422 1.75781C11.3674 2.88303 12 4.4087 12 6C12 7.5913 11.3674 9.11697 10.2422 10.2422C9.11697 11.3674 7.5913 12 6 12C4.4087 12 2.88303 11.3674 1.75781 10.2422C0.632594 9.11697 5.92104e-09 7.5913 0 6C0 4.4087 0.632594 2.88303 1.75781 1.75781C2.88303 0.632594 4.4087 0 6 0ZM6 0.849609C4.63402 0.849609 3.32429 1.3925 2.3584 2.3584C1.3925 3.32429 0.849609 4.63402 0.849609 6C0.849609 7.36598 1.3925 8.67571 2.3584 9.6416C3.32429 10.6075 4.63402 11.1504 6 11.1504C7.36598 11.1504 8.67571 10.6075 9.6416 9.6416C10.6075 8.67571 11.1504 7.36598 11.1504 6C11.1504 4.63402 10.6075 3.32429 9.6416 2.3584C8.67571 1.3925 7.36598 0.849609 6 0.849609ZM6 3.58398C6.23458 3.58398 6.42477 3.77422 6.4248 4.00879V5.82324L8.78906 8.18945C8.9549 8.35536 8.95496 8.62418 8.78906 8.79004C8.62317 8.95569 8.35429 8.95581 8.18848 8.79004L5.69922 6.30078C5.6984 6.29996 5.69807 6.29867 5.69727 6.29785C5.62183 6.22118 5.5752 6.11606 5.5752 6V4.00879C5.57523 3.77422 5.76542 3.58398 6 3.58398Z" fill="currentColor"/></svg>';
+
 function renderTx(taps) {
   txList = taps ? Object.values(taps).sort((a, b) => b.timestamp - a.timestamp) : [];
   txExpanded = false;
@@ -1152,11 +1174,21 @@ function renderTxList() {
   }
   const visible = txExpanded ? txList : txList.slice(0, TX_PAGE_SIZE);
   const itemsHtml = visible
-    .map(t => `
-      <div class="tx-item">
-        <span class="tx-date">${fmtDate(t.timestamp)}</span>
-        <span class="tx-amt${t.status === 'pending' ? ' pending' : ''}">${fmtEur(t.amount)}</span>
-      </div>`)
+    .map(t => {
+      const pending = t.status === 'pending';
+      const nameHtml = t.payerName ? `<span class="tx-name">${escapeHtml(t.payerName)}</span>` : '';
+      return `
+      <div class="tx-item${pending ? ' pending' : ''}">
+        <div class="tx-left">
+          ${nameHtml}
+          <span class="tx-date-row">
+            <span class="tx-date">${fmtDate(t.timestamp)}</span>
+            ${pending ? CLOCK_ICON_SVG : ''}
+          </span>
+        </div>
+        <span class="tx-amt">${fmtEur(t.amount)}</span>
+      </div>`;
+    })
     .join('');
   const toggleHtml = txList.length > TX_PAGE_SIZE
     ? `<button class="tx-toggle" id="tx-toggle">${txExpanded ? 'Weniger anzeigen' : 'Ältere anzeigen'}</button>`
@@ -1302,7 +1334,8 @@ function showPayCardGate() {
         console.error('Kartendetails konnten nicht geladen werden:', e);
       }
 
-      await savePayerInfo(setupData.customerId, pmId, cardBrand, cardLast4);
+      const screenName = document.getElementById('pay-card-screenname').value.trim().slice(0, 40);
+      await savePayerInfo(setupData.customerId, pmId, cardBrand, cardLast4, screenName);
       updatePaymentsIconStatus();
       document.getElementById('pay-card-gate').classList.add('hidden');
       document.getElementById('pay-amount-card').classList.remove('hidden');
@@ -1321,6 +1354,8 @@ async function doTap() {
   const tap = { amount: tapAmount, timestamp: Date.now(), status: hasPaymentMethod ? 'pending' : 'confirmed' };
   if (hasPaymentMethod) {
     tap.payerUid = uid;
+    const { screenName } = getPayerInfo();
+    if (screenName) tap.payerName = screenName;
   }
 
   if (!DEMO_MODE) {
