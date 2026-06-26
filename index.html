@@ -192,10 +192,6 @@
     #ring-track { stroke: var(--c-ring-track); }
     #ring-arc { stroke: var(--c-ring-fill); }
 
-    #payments-badge-circle.badge-ok { fill: var(--c-badge-ok-bg); stroke: var(--c-badge-ok-bg); }
-    #payments-badge-circle.badge-alert { fill: var(--c-badge-alert-bg); stroke: var(--c-badge-alert-bg); }
-    #payments-badge-check { stroke: var(--c-badge-ok-fg); }
-    #payments-badge-exclaim line, #payments-badge-exclaim circle { stroke: var(--c-badge-alert-fg); fill: var(--c-badge-alert-fg); }
 
     /* ── PAYMENT ─────────────────────────────── */
     #s-pay {
@@ -394,34 +390,7 @@
       100%  { transform: translateY(0)     rotate(0deg); }
     }
 
-    /* ── SETTINGS ACTION SHEET ─────────────────── */
-    .settings-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.4);
-      display: flex; align-items: flex-end; justify-content: center;
-      z-index: 100;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-    .settings-overlay.show { opacity: 1; pointer-events: auto; }
-
-    .settings-sheet {
-      background: var(--c-sheet-bg);
-      width: 100%; max-width: 480px;
-      border-radius: 24px 24px 0 0;
-      padding: 12px 24px 28px;
-      box-shadow: 0 -4px 16px rgba(0,0,0,0.2);
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-    }
-    .settings-overlay.show .settings-sheet { transform: translateY(0); }
-
-    .settings-handle {
-      width: 40px; height: 5px; border-radius: 3px;
-      background: rgba(0,0,0,0.2);
-      margin: 8px auto 20px;
-    }
-
+    /* ── SETTINGS FORM ELEMENTS (used inside drawer pages) ─────── */
     .settings-label {
       display: block; font-family: 'Lato', sans-serif;
       font-weight: 700; color: var(--c-strong-text);
@@ -452,12 +421,6 @@
     }
     .settings-save:active { transform: scale(0.97); }
 
-    .settings-cancel {
-      display: block; width: 100%; margin-top: 10px;
-      background: none; color: var(--c-muted); border: none;
-      padding: 10px; font-size: 15px; font-family: 'Lato', sans-serif; cursor: pointer;
-    }
-
     /* Farbschema toggle */
     .scheme-toggle {
       display: flex; gap: 8px; margin-top: 4px;
@@ -480,16 +443,6 @@
       background: none; color: #b35c4a; border: none;
       padding: 10px; font-size: 15px; font-weight: 700;
       font-family: 'Lato', sans-serif; cursor: pointer; text-decoration: underline;
-    }
-
-    .settings-divider {
-      border: none; border-top: 1px solid rgba(0,0,0,0.1);
-      margin: 20px 0 16px;
-    }
-
-    .settings-section-title {
-      font-family: 'Lato', sans-serif; font-weight: 700; font-size: 15px;
-      color: var(--c-strong-text); margin-bottom: 10px;
     }
 
     .settings-hint {
@@ -602,6 +555,98 @@
       font-size: clamp(14px, 4vw, 17px); font-weight: 700;
       text-decoration: underline; cursor: pointer;
     }
+
+    .onboard-skip {
+      background: none; border: none;
+      color: var(--c-muted); font-family: 'Lato', sans-serif;
+      font-size: 14px; cursor: pointer; margin-top: 4px;
+    }
+
+    /* ── SETTINGS DRAWER ─────────────────────────
+       Replaces the old bottom action sheets. Slides in from the right,
+       iOS-Settings-style: a root list (Schwein / Mein Account / About /
+       Impressum) and drill-down pages, navigated via a JS page stack
+       (see pushDrawerPage/popDrawerPage). */
+    .drawer-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .drawer-overlay.show { opacity: 1; pointer-events: auto; }
+
+    .drawer-panel {
+      position: absolute; top: 0; right: 0; bottom: 0;
+      width: min(420px, 100%);
+      background: var(--c-sheet-bg);
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+      box-shadow: -4px 0 16px rgba(0,0,0,0.2);
+    }
+    .drawer-overlay.show .drawer-panel { transform: translateX(0); }
+
+    .drawer-header {
+      display: flex; align-items: center; gap: 4px;
+      padding: 16px 10px 14px 16px; flex-shrink: 0;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    .drawer-back {
+      background: none; border: none; cursor: pointer;
+      color: var(--c-strong-text); padding: 4px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .drawer-back svg { width: 20px; height: 20px; }
+    .drawer-title {
+      flex: 1; font-family: 'Lato', sans-serif; font-weight: 700;
+      font-size: 17px; color: var(--c-strong-text);
+    }
+    .drawer-close {
+      background: none; border: none; font-size: 26px; line-height: 1;
+      color: var(--c-muted); cursor: pointer; padding: 0 10px;
+    }
+
+    .drawer-body {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 8px 0 24px;
+    }
+
+    .drawer-page-desc {
+      font-family: 'Lato', sans-serif; font-size: 13px; color: var(--c-muted);
+      padding: 0 20px 16px;
+    }
+
+    .drawer-list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; background: none; border: none; cursor: pointer;
+      padding: 14px 20px; font-family: 'Lato', sans-serif; font-size: 16px;
+      color: var(--c-strong-text); text-align: left;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+    .drawer-list-item:active { background: rgba(0,0,0,0.04); }
+    .drawer-list-item .chevron { width: 14px; height: 14px; color: var(--c-muted); flex-shrink: 0; }
+    .drawer-list-item-label { display: flex; align-items: center; gap: 8px; }
+
+    .drawer-badge-test {
+      font-family: 'Lato', sans-serif; font-size: 10px; font-weight: 700;
+      color: #8a5a00; background: #ffe6ad;
+      padding: 2px 7px; border-radius: 8px;
+    }
+
+    .drawer-list-item.danger {
+      color: #b35c4a; font-weight: 700; margin-top: 14px;
+      border-top: 1px solid rgba(0,0,0,0.08); border-bottom: none;
+    }
+
+    .drawer-form { padding: 4px 20px; }
+    .drawer-form .settings-label:first-of-type { margin-top: 0; }
+
+    .drawer-static-text {
+      font-family: 'Lato', sans-serif; font-size: 14px; color: var(--c-strong-text);
+      padding: 0 20px; line-height: 1.5;
+    }
+    .drawer-static-text + .drawer-static-text { margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -609,14 +654,11 @@
 <!-- ── DASHBOARD ──────────────────────────────────── -->
 <div id="s-dash" class="screen hidden">
   <div class="dash-top">
-    <button class="icon-btn" id="payments-icon-btn" title="Zahlungen verwalten">
+    <button class="icon-btn hidden" id="payments-icon-btn" title="Karte hinterlegen">
       <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path id="payments-badge-circle" class="badge-ok" d="M10.787 17.4161C9.90792 16.537 9.41406 15.3448 9.41406 14.1016C9.41406 12.8584 9.90792 11.6661 10.787 10.787C11.6661 9.90792 12.8584 9.41406 14.1016 9.41406C15.3448 9.41406 16.537 9.90792 17.4161 10.787C18.2952 11.6661 18.7891 12.8584 18.7891 14.1016C18.7891 15.3448 18.2952 16.537 17.4161 17.4161C16.537 18.2952 15.3448 18.7891 14.1016 18.7891C12.8584 18.7891 11.6661 18.2952 10.787 17.4161Z" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-        <path id="payments-badge-check" d="M16.1907 12.7391L13.9211 15.7648C13.8707 15.8319 13.8065 15.8873 13.7329 15.9275C13.6592 15.9676 13.5778 15.9915 13.4941 15.9975C13.4105 16.0035 13.3265 15.9914 13.2479 15.9622C13.1692 15.933 13.0978 15.8873 13.0383 15.8281L11.8665 14.6562" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-        <g id="payments-badge-exclaim" class="hidden">
-          <line x1="14.1" y1="11.4" x2="14.1" y2="14.7" stroke-width="1.4" stroke-linecap="round"/>
-          <circle cx="14.1" cy="16.6" r="0.75"/>
-        </g>
+        <circle cx="14.1016" cy="14.1016" r="5.6875" fill="var(--c-badge-alert-bg)" stroke="var(--c-badge-alert-bg)" stroke-width="1.25"/>
+        <line x1="14.1" y1="11.4" x2="14.1" y2="14.7" stroke="var(--c-badge-alert-fg)" stroke-width="1.4" stroke-linecap="round"/>
+        <circle cx="14.1" cy="16.6" r="0.75" fill="var(--c-badge-alert-fg)"/>
         <path d="M16.4453 7.07031V2.38281C16.4453 2.07201 16.3218 1.77394 16.1021 1.55417C15.8823 1.3344 15.5842 1.21094 15.2734 1.21094H2.38281C2.07201 1.21094 1.77394 1.3344 1.55417 1.55417C1.3344 1.77394 1.21094 2.07201 1.21094 2.38281V11.7578C1.21094 12.0686 1.3344 12.3667 1.55417 12.5865C1.77394 12.8062 2.07201 12.9297 2.38281 12.9297H7.07031" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M1.21094 4.72656H16.4453" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M3.55469 7.65625H8.24219" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
@@ -675,7 +717,6 @@
 
   <div id="pay-card-gate" class="pay-card-gate hidden">
     <p class="pay-card-gate-title">Bevor du einzahlst:<br>Karte hinterlegen</p>
-    <input class="settings-input" id="pay-card-screenname" type="text" placeholder="Dein Anzeigename (z.B. Vorname)" style="margin-bottom:10px;">
     <div class="settings-card-element" id="pay-card-element"></div>
     <button class="settings-charge" id="pay-save-card" type="button">Karte speichern & weiter</button>
     <p class="settings-hint" id="pay-card-status"></p>
@@ -752,68 +793,19 @@
   </div>
 </div>
 
-<!-- ── SETTINGS ACTION SHEET ────────────────────── -->
-<div id="settings-overlay" class="settings-overlay hidden">
-  <div class="settings-sheet">
-    <div class="settings-handle"></div>
-
-    <label class="settings-label" for="settings-name">Worauf sparst du?</label>
-    <input class="settings-input" id="settings-name" type="text" placeholder="z.B. Urlaub">
-
-    <label class="settings-label" for="settings-goal">Wieviel möchtest du sparen?</label>
-    <div class="settings-goal-wrap">
-      <input class="settings-input" id="settings-goal" type="number" min="1" step="1" placeholder="150">
-      <span class="settings-suffix">€</span>
+<!-- ── SETTINGS DRAWER ────────────────────────────── -->
+<div id="settings-drawer" class="drawer-overlay hidden">
+  <div class="drawer-panel">
+    <div class="drawer-header">
+      <button class="drawer-back hidden" id="drawer-back-btn" aria-label="Zurück">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12.5 16.25L6.25 10L12.5 3.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <span class="drawer-title" id="drawer-title">Einstellungen</span>
+      <button class="drawer-close" id="drawer-close-btn" aria-label="Schließen">&times;</button>
     </div>
-
-    <label class="settings-label">Farbschema</label>
-    <div class="scheme-toggle">
-      <button type="button" class="scheme-option" id="scheme-option-1" data-scheme="1">Schema 1</button>
-      <button type="button" class="scheme-option" id="scheme-option-2" data-scheme="2">Schema 2</button>
-    </div>
-
-    <button class="settings-save" id="settings-save">Speichern</button>
-    <button class="settings-cancel" id="settings-cancel">Abbrechen</button>
-    <button class="settings-reset" id="settings-reset">Schweinchen zurücksetzen</button>
-  </div>
-</div>
-
-<!-- ── ZAHLUNGEN VERWALTEN ────────────────────────── -->
-<div id="payments-overlay" class="settings-overlay hidden">
-  <div class="settings-sheet">
-    <div class="settings-handle"></div>
-
-    <p class="settings-section-title">Zahlungsmittel auf diesem Gerät</p>
-    <div id="payments-card-status">
-      <div class="card-display hidden" id="card-display">
-        <span class="card-brand-badge" id="card-brand-badge">CARD</span>
-        <span class="card-number" id="card-number-text">XXXX XXXX XXXX 0000</span>
-      </div>
-      <p class="settings-hint" id="payments-card-text">Kein Zahlungsmittel hinterlegt.</p>
-      <p class="settings-hint">Die Kartendaten werden nur lokal auf diesem Gerät gespeichert — die eigentlichen Kartendaten liegen ausschließlich bei Stripe, nie auf unserem Server.</p>
-      <button class="settings-reset" id="payments-forget-card">Karte vergessen</button>
-      <button class="settings-charge" id="payments-add-card">Karte hinterlegen</button>
-    </div>
-
-    <div id="billing-section">
-      <hr class="settings-divider">
-      <p class="settings-section-title">Abrechnung für dieses Schweinchen</p>
-
-      <p class="settings-hint hidden" id="payout-account-text"></p>
-
-      <label class="settings-label" for="settings-threshold">Mindestbetrag pro Person für Abrechnung</label>
-      <div class="settings-goal-wrap">
-        <input class="settings-input" id="settings-threshold" type="number" min="1" step="1" placeholder="15">
-        <span class="settings-suffix">€</span>
-      </div>
-      <p class="settings-hint">Jede Person wird abgerechnet, sobald ihr eigener offener Betrag diese Summe erreicht — spätestens aber nach 30 Tagen.</p>
-
-      <button class="settings-save" id="settings-save-threshold">Speichern</button>
-      <button class="settings-charge" id="settings-charge-now" type="button">Jetzt abrechnen</button>
-      <p class="settings-hint" id="charge-status"></p>
-    </div>
-
-    <button class="settings-cancel" id="payments-cancel">Schließen</button>
+    <div class="drawer-body" id="drawer-body"></div>
   </div>
 </div>
 
@@ -862,6 +854,37 @@
   <div class="onboard-actions">
     <button class="onboard-next" id="onboard-next">Weiter</button>
     <button class="onboard-back" id="onboard-back">Zurück</button>
+  </div>
+</div>
+
+<!-- ── USER-ONBOARDING (pro Gerät, nicht pro Schwein) ─────────────────── -->
+<div id="s-user-onboard" class="screen hidden onboard-screen">
+  <div class="onboard-content">
+    <div class="onboard-step" id="user-onboard-step-0">
+      <p class="onboard-emoji">👋</p>
+      <h2 class="onboard-title">Wie dürfen wir dich nennen?</h2>
+      <p class="onboard-hint">Dieser Name wird bei deinen Einzahlungen angezeigt — auf allen Schweinchen, die du antippst.</p>
+      <input class="settings-input" id="user-onboard-name" type="text" placeholder="Dein Anzeigename" style="margin-top:10px;">
+    </div>
+
+    <div class="onboard-step hidden" id="user-onboard-step-1">
+      <p class="onboard-emoji">💳</p>
+      <h2 class="onboard-title">Karte hinterlegen</h2>
+      <p class="onboard-hint">Damit künftiges Einzahlen ohne Umweg funktioniert. Du kannst das auch später jederzeit in den Einstellungen nachholen.</p>
+      <div class="settings-card-element" id="user-onboard-card-element" style="margin-top:10px;"></div>
+      <p class="settings-hint" id="user-onboard-card-status"></p>
+      <button type="button" class="onboard-skip" id="user-onboard-skip">Später</button>
+    </div>
+
+    <div class="onboard-dots">
+      <span class="onboard-dot" data-step="0"></span>
+      <span class="onboard-dot" data-step="1"></span>
+    </div>
+  </div>
+
+  <div class="onboard-actions">
+    <button class="onboard-next" id="user-onboard-next">Weiter</button>
+    <button class="onboard-back hidden" id="user-onboard-back">Zurück</button>
   </div>
 </div>
 
@@ -1348,11 +1371,6 @@ function showPayCardGate() {
       }
 
       await savePayerInfo(setupData.customerId, pmId, cardBrand, cardLast4);
-      // Two independent writes on purpose — the display name has nothing to
-      // do with the card itself, it just happens to be asked for on the same
-      // screen today (see CLAUDE.md).
-      const screenName = document.getElementById('pay-card-screenname').value.trim().slice(0, 40);
-      await saveDisplayName(screenName);
       updatePaymentsIconStatus();
       document.getElementById('pay-card-gate').classList.add('hidden');
       document.getElementById('pay-amount-card').classList.remove('hidden');
@@ -1437,19 +1455,295 @@ function spawnSparkles(container, centerX, centerY) {
   setTimeout(() => group.remove(), 900);
 }
 
-// ── SETTINGS ACTION SHEET ──────────────────────────────────────────────────────
+// ── SETTINGS DRAWER ────────────────────────────────────────────────────────────
+// iOS-Settings-style drill-down: a root list (Schwein / Mein Account / About /
+// Impressum) and per-field detail pages, navigated via a small page stack.
+// Entering "Schwein" gates once via withSettingsAuth(); everything underneath
+// reuses that same unlocked session (settingsUnlocked).
 let currentJar = null;
+let drawerStack = [];
 
-function openSettings() {
-  document.getElementById('settings-name').value = currentJar?.name || '';
-  document.getElementById('settings-goal').value = currentJar?.goal || '';
-  document.querySelectorAll('.scheme-option').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.scheme === (currentJar?.colorScheme || '1'));
-  });
+const CHEVRON_SVG = '<svg class="chevron" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 3.75L13.75 10L7.5 16.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-  const overlay = document.getElementById('settings-overlay');
+function drawerListItem(id, label, danger = false) {
+  return `<button class="drawer-list-item${danger ? ' danger' : ''}" id="${id}"><span class="drawer-list-item-label">${label}</span>${danger ? '' : CHEVRON_SVG}</button>`;
+}
+
+const DRAWER_PAGES = {
+  root: {
+    title: 'Einstellungen',
+    render(c) {
+      c.innerHTML =
+        drawerListItem('drawer-go-schwein', 'Schwein') +
+        drawerListItem('drawer-go-account', 'Mein Account') +
+        drawerListItem('drawer-go-about', 'About') +
+        drawerListItem('drawer-go-impressum', 'Impressum');
+      document.getElementById('drawer-go-schwein').onclick = () => withSettingsAuth(() => pushDrawerPage('schwein'));
+      document.getElementById('drawer-go-account').onclick = () => pushDrawerPage('account');
+      document.getElementById('drawer-go-about').onclick = () => pushDrawerPage('about');
+      document.getElementById('drawer-go-impressum').onclick = () => pushDrawerPage('impressum');
+    },
+  },
+
+  schwein: {
+    title: 'Schwein',
+    render(c) {
+      c.innerHTML =
+        drawerListItem('drawer-go-name', 'Name') +
+        drawerListItem('drawer-go-goal', 'Sparziel') +
+        drawerListItem('drawer-go-payout', 'Auszahlungs-Konto') +
+        drawerListItem('drawer-go-billing', 'Abrechnung') +
+        drawerListItem('drawer-go-password', 'Schweinchen-Passwort') +
+        drawerListItem('drawer-go-colorscheme', 'Farbmodus <span class="drawer-badge-test">Test</span>') +
+        drawerListItem('drawer-go-reset', 'Schweinchen zurücksetzen', true);
+      document.getElementById('drawer-go-name').onclick = () => pushDrawerPage('schwein-name');
+      document.getElementById('drawer-go-goal').onclick = () => pushDrawerPage('schwein-goal');
+      document.getElementById('drawer-go-payout').onclick = () => pushDrawerPage('schwein-payout');
+      document.getElementById('drawer-go-billing').onclick = () => pushDrawerPage('schwein-billing');
+      document.getElementById('drawer-go-password').onclick = () => pushDrawerPage('schwein-password');
+      document.getElementById('drawer-go-colorscheme').onclick = () => pushDrawerPage('schwein-colorscheme');
+      document.getElementById('drawer-go-reset').onclick = () => withSettingsAuth(resetJar);
+    },
+  },
+
+  'schwein-name': {
+    title: 'Name',
+    desc: 'So heißt dieses Schweinchen auf dem Dashboard.',
+    render(c) {
+      c.innerHTML = `<div class="drawer-form">
+        <input class="settings-input" id="settings-name" type="text" placeholder="z.B. Urlaub" value="${escapeHtml(currentJar?.name || '')}">
+        <button class="settings-save" id="settings-save-name">Speichern</button>
+      </div>`;
+      document.getElementById('settings-save-name').onclick = () => withSettingsAuth(saveName);
+    },
+  },
+
+  'schwein-goal': {
+    title: 'Sparziel',
+    desc: 'Wie viel soll insgesamt zusammenkommen?',
+    render(c) {
+      c.innerHTML = `<div class="drawer-form">
+        <div class="settings-goal-wrap">
+          <input class="settings-input" id="settings-goal" type="number" min="1" step="1" placeholder="150" value="${currentJar?.goal || ''}">
+          <span class="settings-suffix">€</span>
+        </div>
+        <button class="settings-save" id="settings-save-goal">Speichern</button>
+      </div>`;
+      document.getElementById('settings-save-goal').onclick = () => withSettingsAuth(saveGoal);
+    },
+  },
+
+  'schwein-payout': {
+    title: 'Auszahlungs-Konto',
+    desc: 'Hierher wird das gesammelte Geld ausgezahlt.',
+    render(c) {
+      c.innerHTML = `<div class="drawer-form">
+        <input class="settings-input" id="settings-payout-holder" type="text" placeholder="Kontoinhaber" value="${escapeHtml(currentJar?.payoutAccountHolder || '')}">
+        <input class="settings-input" id="settings-payout-iban" type="text" placeholder="IBAN" value="${escapeHtml(currentJar?.payoutAccountIban || '')}" style="margin-top:10px;">
+        <button class="settings-save" id="settings-save-payout">Speichern</button>
+      </div>`;
+      document.getElementById('settings-save-payout').onclick = () => withSettingsAuth(savePayoutAccount);
+    },
+  },
+
+  'schwein-billing': {
+    title: 'Abrechnung',
+    desc: 'Ab wann automatisch abgerechnet wird, und manuell sofort abrechnen.',
+    render(c) {
+      c.innerHTML = `<div class="drawer-form">
+        <label class="settings-label" for="settings-threshold">Mindestbetrag pro Person</label>
+        <div class="settings-goal-wrap">
+          <input class="settings-input" id="settings-threshold" type="number" min="1" step="1" placeholder="15" value="${currentJar?.payoutThreshold || 15}">
+          <span class="settings-suffix">€</span>
+        </div>
+        <p class="settings-hint">Jede Person wird abgerechnet, sobald ihr eigener offener Betrag diese Summe erreicht — spätestens aber nach 30 Tagen.</p>
+        <button class="settings-save" id="settings-save-threshold">Speichern</button>
+        <button class="settings-charge" id="settings-charge-now" type="button">Jetzt abrechnen</button>
+        <p class="settings-hint" id="charge-status"></p>
+      </div>`;
+      document.getElementById('settings-save-threshold').onclick = () => withSettingsAuth(saveThreshold);
+      document.getElementById('settings-charge-now').onclick = () => withSettingsAuth(chargeNow);
+    },
+  },
+
+  'schwein-password': {
+    title: 'Schweinchen-Passwort',
+    desc: 'Andere Geräte brauchen dieses Passwort, um Einstellungen zu ändern oder abzurechnen.',
+    render(c) {
+      c.innerHTML = `<div class="drawer-form">
+        <input class="settings-input" id="settings-password" type="password" placeholder="Neues Passwort">
+        <button class="settings-save" id="settings-save-password">Speichern</button>
+        <p class="settings-hint" id="password-status"></p>
+      </div>`;
+      document.getElementById('settings-save-password').onclick = () => withSettingsAuth(saveSettingsPassword);
+    },
+  },
+
+  'schwein-colorscheme': {
+    title: 'Farbmodus',
+    desc: 'Nur für die Testphase sichtbar — später wird der Farbmodus fix vorgegeben.',
+    render(c) {
+      c.innerHTML = `<div class="drawer-form">
+        <div class="scheme-toggle">
+          <button type="button" class="scheme-option" id="scheme-option-1" data-scheme="1">Schema 1</button>
+          <button type="button" class="scheme-option" id="scheme-option-2" data-scheme="2">Schema 2</button>
+        </div>
+      </div>`;
+      document.querySelectorAll('.scheme-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.scheme === (currentJar?.colorScheme || '1'));
+        btn.onclick = () => withSettingsAuth(() => saveColorScheme(btn.dataset.scheme));
+      });
+    },
+  },
+
+  account: {
+    title: 'Mein Account',
+    render(c) {
+      c.innerHTML =
+        drawerListItem('drawer-go-nickname', 'Mein Nick-Name') +
+        drawerListItem('drawer-go-card', 'Karte');
+      document.getElementById('drawer-go-nickname').onclick = () => pushDrawerPage('account-nickname');
+      document.getElementById('drawer-go-card').onclick = () => pushDrawerPage('account-card');
+    },
+  },
+
+  'account-nickname': {
+    title: 'Mein Nick-Name',
+    desc: 'Wird bei deinen Einzahlungen angezeigt — auf allen Schweinchen, die du antippst.',
+    render(c) {
+      c.innerHTML = `<div class="drawer-form">
+        <input class="settings-input" id="account-nickname-input" type="text" placeholder="Dein Anzeigename" value="${escapeHtml(getDisplayName() || '')}">
+        <button class="settings-save" id="account-nickname-save">Speichern</button>
+      </div>`;
+      document.getElementById('account-nickname-save').onclick = async () => {
+        const name = document.getElementById('account-nickname-input').value.trim().slice(0, 40);
+        if (!name) return;
+        await saveDisplayName(name);
+        popDrawerPage();
+      };
+    },
+  },
+
+  'account-card': {
+    title: 'Karte',
+    desc: 'Dieses Zahlungsmittel ist an dieses Gerät gebunden, nicht an ein Schweinchen.',
+    render(c) {
+      c.innerHTML = `<div class="drawer-form" id="account-card-status"></div>`;
+      renderAccountCardStatus();
+    },
+  },
+
+  about: {
+    title: 'About',
+    render(c) {
+      c.innerHTML =
+        '<p class="drawer-static-text">Cashless Schweindl — das digitale Sparschwein.</p>' +
+        '<p class="drawer-static-text">Weitere Informationen folgen.</p>';
+    },
+  },
+
+  impressum: {
+    title: 'Impressum',
+    render(c) {
+      c.innerHTML = '<p class="drawer-static-text">Impressum folgt.</p>';
+    },
+  },
+};
+
+function renderDrawerPage(id) {
+  const page = DRAWER_PAGES[id];
+  document.getElementById('drawer-title').textContent = page.title;
+  document.getElementById('drawer-back-btn').classList.toggle('hidden', drawerStack.length <= 1);
+  const body = document.getElementById('drawer-body');
+  body.innerHTML = page.desc ? `<p class="drawer-page-desc">${page.desc}</p>` : '';
+  const container = document.createElement('div');
+  body.appendChild(container);
+  page.render(container);
+}
+
+function pushDrawerPage(id) {
+  drawerStack.push(id);
+  renderDrawerPage(id);
+}
+
+function popDrawerPage() {
+  if (drawerStack.length <= 1) { closeDrawer(); return; }
+  drawerStack.pop();
+  renderDrawerPage(drawerStack[drawerStack.length - 1]);
+}
+
+function openDrawer(id) {
+  drawerStack = [id];
+  renderDrawerPage(id);
+  const overlay = document.getElementById('settings-drawer');
   overlay.classList.remove('hidden');
   requestAnimationFrame(() => overlay.classList.add('show'));
+}
+
+function openDrawerToCard() {
+  drawerStack = ['root', 'account', 'account-card'];
+  renderDrawerPage('account-card');
+  const overlay = document.getElementById('settings-drawer');
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => overlay.classList.add('show'));
+}
+
+function closeDrawer() {
+  const overlay = document.getElementById('settings-drawer');
+  overlay.classList.remove('show');
+  setTimeout(() => overlay.classList.add('hidden'), 300);
+}
+
+async function saveName() {
+  const name = document.getElementById('settings-name').value.trim();
+  if (!name) return;
+  if (!DEMO_MODE) {
+    await db.ref(`jars/${jarId}`).update({ name });
+  } else {
+    DEMO_JAR.name = name;
+    currentJar = DEMO_JAR;
+    document.getElementById('dash-name').textContent = name;
+  }
+  popDrawerPage();
+}
+
+async function saveGoal() {
+  const goal = parseInt(document.getElementById('settings-goal').value, 10);
+  if (!goal || goal < 1) return;
+  if (!DEMO_MODE) {
+    await db.ref(`jars/${jarId}`).update({ goal });
+  } else {
+    DEMO_JAR.goal = goal;
+    currentJar = DEMO_JAR;
+    setRing(DEMO_JAR.total, goal);
+  }
+  popDrawerPage();
+}
+
+async function savePayoutAccount() {
+  const payoutAccountHolder = document.getElementById('settings-payout-holder').value.trim();
+  const payoutAccountIban = document.getElementById('settings-payout-iban').value.trim();
+  if (!payoutAccountHolder || !payoutAccountIban) return;
+  if (!DEMO_MODE) {
+    await db.ref(`jars/${jarId}`).update({ payoutAccountHolder, payoutAccountIban });
+  } else {
+    DEMO_JAR.payoutAccountHolder = payoutAccountHolder;
+    DEMO_JAR.payoutAccountIban = payoutAccountIban;
+    currentJar = DEMO_JAR;
+  }
+  popDrawerPage();
+}
+
+async function saveSettingsPassword() {
+  const password = document.getElementById('settings-password').value;
+  if (!password) return;
+  if (DEMO_MODE) { popDrawerPage(); return; }
+  try {
+    await setSettingsPassword(password);
+    popDrawerPage();
+  } catch (e) {
+    document.getElementById('password-status').textContent = 'Speichern fehlgeschlagen: ' + e.message;
+  }
 }
 
 async function saveColorScheme(scheme) {
@@ -1463,107 +1757,44 @@ async function saveColorScheme(scheme) {
   }
 }
 
-function closeSettings() {
-  const overlay = document.getElementById('settings-overlay');
-  overlay.classList.remove('show');
-  setTimeout(() => overlay.classList.add('hidden'), 300);
-}
-
-async function saveSettings() {
-  const name = document.getElementById('settings-name').value.trim();
-  const goal = parseInt(document.getElementById('settings-goal').value, 10);
-  if (!name || !goal || goal < 1) return;
-
-  if (!DEMO_MODE) {
-    await db.ref(`jars/${jarId}`).update({ name, goal });
-  } else {
-    DEMO_JAR.name = name;
-    DEMO_JAR.goal = goal;
-    currentJar = DEMO_JAR;
-    document.getElementById('dash-name').textContent = name;
-    setRing(DEMO_JAR.total, goal);
-  }
-  closeSettings();
-}
-
-function renderPaymentsCardStatus() {
-  const text = document.getElementById('payments-card-text');
-  const forgetBtn = document.getElementById('payments-forget-card');
-  const addBtn = document.getElementById('payments-add-card');
-  const display = document.getElementById('card-display');
-  const badge = document.getElementById('card-brand-badge');
-  const numberText = document.getElementById('card-number-text');
-
+function renderAccountCardStatus() {
+  const holder = document.getElementById('account-card-status');
+  if (!holder) return;
   if (hasPayerCard()) {
     const { cardBrand, cardLast4 } = getPayerInfo();
-    badge.textContent = cardBrand ? cardBrand.toUpperCase() : 'KARTE';
-    badge.className = 'card-brand-badge' + (cardBrand ? ` ${cardBrand.toLowerCase()}` : '');
-    numberText.textContent = cardLast4 ? `XXXX XXXX XXXX ${cardLast4}` : 'XXXX XXXX XXXX XXXX';
-    display.classList.remove('hidden');
-    text.classList.add('hidden');
-    forgetBtn.classList.remove('hidden');
-    addBtn.classList.add('hidden');
+    holder.innerHTML = `
+      <div class="card-display">
+        <span class="card-brand-badge${cardBrand ? ` ${cardBrand.toLowerCase()}` : ''}">${cardBrand ? cardBrand.toUpperCase() : 'KARTE'}</span>
+        <span class="card-number">${cardLast4 ? `XXXX XXXX XXXX ${cardLast4}` : 'XXXX XXXX XXXX XXXX'}</span>
+      </div>
+      <p class="settings-hint">Die Kartendaten werden nur lokal auf diesem Gerät gespeichert — die eigentlichen Kartendaten liegen ausschließlich bei Stripe, nie auf unserem Server.</p>
+      <button class="settings-reset" id="account-forget-card">Karte vergessen</button>`;
+    document.getElementById('account-forget-card').onclick = forgetCard;
   } else {
-    display.classList.add('hidden');
-    text.classList.remove('hidden');
-    text.textContent = 'Kein Zahlungsmittel hinterlegt. Wird beim nächsten Einzahlen abgefragt.';
-    forgetBtn.classList.add('hidden');
-    addBtn.classList.remove('hidden');
+    holder.innerHTML = `
+      <p class="settings-hint">Kein Zahlungsmittel hinterlegt. Wird beim nächsten Einzahlen abgefragt.</p>
+      <button class="settings-charge" id="account-add-card">Karte hinterlegen</button>`;
+    document.getElementById('account-add-card').onclick = goToCardCapture;
   }
-  updatePaymentsIconStatus();
 }
 
 function goToCardCapture() {
-  closePaymentsOverlay();
+  closeDrawer();
   history.pushState(null, '', `/jar/${jarId}/pay`);
   openPaymentSheet();
-}
-
-function openPaymentsOverlay() {
-  document.getElementById('settings-threshold').value = currentJar?.payoutThreshold || 15;
-  document.getElementById('charge-status').textContent = '';
-  renderPaymentsCardStatus();
-
-  // Schwelle/"Jetzt abrechnen"/Auszahlungsziel sind reine Owner-Angelegenheiten —
-  // Kartendaten dagegen hängen am jeweiligen Zahler, bleiben also für alle sichtbar.
-  // Legacy-Jars ohne ownerUid müssen den Bereich trotzdem sehen, sonst kann nie
-  // jemand den "Owner werden"-Dialog (claimOwnershipFlow) anstoßen.
-  const owner = isOwnerDevice();
-  const unclaimed = !currentJar?.ownerUid;
-  document.getElementById('billing-section').classList.toggle('hidden', !owner && !unclaimed);
-  const payoutText = document.getElementById('payout-account-text');
-  if (owner && currentJar?.payoutAccountIban) {
-    payoutText.textContent = `Auszahlungsziel: ${currentJar.payoutAccountHolder || ''} · ${currentJar.payoutAccountIban}`;
-    payoutText.classList.remove('hidden');
-  } else {
-    payoutText.classList.add('hidden');
-  }
-
-  const overlay = document.getElementById('payments-overlay');
-  overlay.classList.remove('hidden');
-  requestAnimationFrame(() => overlay.classList.add('show'));
-}
-
-function closePaymentsOverlay() {
-  const overlay = document.getElementById('payments-overlay');
-  overlay.classList.remove('show');
-  setTimeout(() => overlay.classList.add('hidden'), 300);
 }
 
 function forgetCard() {
   const confirmed = confirm('Zahlungsmittel auf diesem Gerät vergessen? Beim nächsten Einzahlen wird erneut nach einer Karte gefragt.');
   if (!confirmed) return;
   forgetPayerCard();
-  renderPaymentsCardStatus();
+  renderAccountCardStatus();
+  updatePaymentsIconStatus();
 }
 
 function updatePaymentsIconStatus() {
   const hasCard = !DEMO_MODE ? hasPayerCard() : true;
-  const circle = document.getElementById('payments-badge-circle');
-  circle.classList.toggle('badge-ok', hasCard);
-  circle.classList.toggle('badge-alert', !hasCard);
-  document.getElementById('payments-badge-check').classList.toggle('hidden', !hasCard);
-  document.getElementById('payments-badge-exclaim').classList.toggle('hidden', hasCard);
+  document.getElementById('payments-icon-btn').classList.toggle('hidden', hasCard);
 }
 
 async function saveThreshold() {
@@ -1622,7 +1853,7 @@ async function maybeAutoCharge(jarSnapshot) {
 
 async function resetJar() {
   const confirmed = confirm('Möchtest du das Schweinchen wirklich zurücksetzen? Alle Einzahlungen und Einstellungen werden gelöscht und das Onboarding startet neu.');
-  if (!confirmed || DEMO_MODE) { closeSettings(); return; }
+  if (!confirmed || DEMO_MODE) { closeDrawer(); return; }
 
   const snap = await db.ref(`jars/${jarId}`).once('value');
   const data = snap.val();
@@ -1635,7 +1866,7 @@ async function resetJar() {
   // fails (e.g. triggered via the password-unlock path rather than the owner device).
   await db.ref(`settingsAuth/${jarId}`).remove().catch(() => {});
   await db.ref(`jars/${jarId}`).set({ onboarded: false });
-  closeSettings();
+  closeDrawer();
 }
 
 // ── ONBOARDING ────────────────────────────────────────────────────────────────
@@ -1711,8 +1942,100 @@ async function finishOnboarding() {
   if (uid) await setSettingsPassword(settingsPassword);
 }
 
+// ── USER-ONBOARDING (pro Gerät, einmalig, unabhängig vom jeweiligen Schwein) ──
+// Läuft nach dem Schwein-Onboarding für jedes Gerät, das noch keinen
+// Anzeigenamen gesetzt hat — egal ob es das erste oder das zehnte Schwein
+// dieses Geräts ist. Die Karte ist hier bewusst überspringbar (anders als das
+// pflichtige pay-card-gate beim ersten echten Tap).
+function needsUserOnboarding() {
+  return !DEMO_MODE && !getDisplayName();
+}
+
+const USER_ONBOARD_STEPS = 2;
+let userOnboardStepIdx = 0;
+let userOnboardCardElement = null;
+
+function showUserOnboardStep(i) {
+  userOnboardStepIdx = i;
+  for (let s = 0; s < USER_ONBOARD_STEPS; s++) {
+    document.getElementById(`user-onboard-step-${s}`).classList.toggle('hidden', s !== i);
+    document.querySelector(`#s-user-onboard .onboard-dot[data-step="${s}"]`).classList.toggle('active', s === i);
+  }
+  document.getElementById('user-onboard-back').classList.toggle('hidden', i === 0);
+  document.getElementById('user-onboard-next').textContent = i === USER_ONBOARD_STEPS - 1 ? 'Speichern & weiter' : 'Weiter';
+}
+
+async function saveUserOnboardCard() {
+  const setupRes = await fetch('/api/setup-intent', { method: 'POST' });
+  const setupData = await setupRes.json();
+  if (!setupRes.ok) throw new Error(setupData.error || 'Setup fehlgeschlagen');
+
+  const result = await stripe.confirmCardSetup(setupData.clientSecret, {
+    payment_method: { card: userOnboardCardElement },
+  });
+  if (result.error) throw new Error(result.error.message);
+
+  const pmId = result.setupIntent.payment_method;
+  const uid = await payerReadyPromise;
+  if (uid) {
+    await db.ref(`payerProfiles/${uid}`).set({ customerId: setupData.customerId, paymentMethodId: pmId });
+  }
+
+  let cardBrand = null, cardLast4 = null;
+  try {
+    const infoRes = await fetch(`/api/payment-method-info?uid=${uid}`);
+    const info = await infoRes.json();
+    cardBrand = info.brand;
+    cardLast4 = info.last4;
+  } catch (e) {
+    console.error('Kartendetails konnten nicht geladen werden:', e);
+  }
+  await savePayerInfo(setupData.customerId, pmId, cardBrand, cardLast4);
+  updatePaymentsIconStatus();
+}
+
+function initUserOnboarding(onComplete) {
+  document.getElementById('user-onboard-name').value = '';
+  document.getElementById('user-onboard-card-status').textContent = '';
+  showUserOnboardStep(0);
+
+  if (stripe && !userOnboardCardElement) {
+    const elements = stripe.elements();
+    userOnboardCardElement = elements.create('card', { hidePostalCode: true });
+    userOnboardCardElement.mount('#user-onboard-card-element');
+  }
+
+  document.getElementById('user-onboard-back').onclick = () => {
+    if (userOnboardStepIdx > 0) showUserOnboardStep(userOnboardStepIdx - 1);
+  };
+
+  document.getElementById('user-onboard-skip').onclick = onComplete;
+
+  document.getElementById('user-onboard-next').onclick = async () => {
+    if (userOnboardStepIdx === 0) {
+      const name = document.getElementById('user-onboard-name').value.trim();
+      if (!name) return;
+      await saveDisplayName(name.slice(0, 40));
+      showUserOnboardStep(1);
+      return;
+    }
+    const btn = document.getElementById('user-onboard-next');
+    const status = document.getElementById('user-onboard-card-status');
+    btn.disabled = true;
+    try {
+      await saveUserOnboardCard();
+      onComplete();
+    } catch (e) {
+      status.textContent = e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  };
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 let dashboardDataPromise;
+let appEnteredPromise;
 
 function initDashboard() {
   updatePaymentsIconStatus();
@@ -1727,28 +2050,16 @@ function initDashboard() {
   addTapActiveFeedback(document.getElementById('plus-btn'));
   initSwipe();
 
-  document.getElementById('payments-icon-btn').onclick = openPaymentsOverlay;
-  document.getElementById('settings-icon-btn').onclick = openSettings;
-
-  document.getElementById('settings-cancel').onclick = closeSettings;
-  document.getElementById('settings-overlay').onclick = (e) => {
-    if (e.target.id === 'settings-overlay') closeSettings();
+  document.getElementById('settings-icon-btn').onclick = () => openDrawer('root');
+  document.getElementById('payments-icon-btn').onclick = openDrawerToCard;
+  document.getElementById('drawer-back-btn').onclick = popDrawerPage;
+  document.getElementById('drawer-close-btn').onclick = closeDrawer;
+  document.getElementById('settings-drawer').onclick = (e) => {
+    if (e.target.id === 'settings-drawer') closeDrawer();
   };
-  document.getElementById('settings-save').onclick = () => withSettingsAuth(saveSettings);
-  document.getElementById('settings-reset').onclick = () => withSettingsAuth(resetJar);
 
-  document.getElementById('payments-cancel').onclick = closePaymentsOverlay;
-  document.getElementById('payments-overlay').onclick = (e) => {
-    if (e.target.id === 'payments-overlay') closePaymentsOverlay();
-  };
-  document.getElementById('settings-save-threshold').onclick = () => withSettingsAuth(saveThreshold);
-  document.getElementById('settings-charge-now').onclick = () => withSettingsAuth(chargeNow);
-  document.getElementById('payments-forget-card').onclick = forgetCard;
-  document.getElementById('payments-add-card').onclick = goToCardCapture;
-
-  document.querySelectorAll('.scheme-option').forEach(btn => {
-    btn.onclick = () => withSettingsAuth(() => saveColorScheme(btn.dataset.scheme));
-  });
+  let resolveAppEntered;
+  appEnteredPromise = new Promise(resolve => { resolveAppEntered = resolve; });
 
   if (DEMO_MODE) {
     currentJar = DEMO_JAR;
@@ -1758,19 +2069,15 @@ function initDashboard() {
     applyColorScheme(DEMO_JAR.colorScheme);
     document.getElementById('s-dash').classList.remove('hidden');
     dashboardDataPromise = Promise.resolve(DEMO_JAR);
+    resolveAppEntered();
   } else {
     let resolveFirst;
+    let appEntered = false;
+    let userOnboardingStarted = false;
     dashboardDataPromise = new Promise(resolve => { resolveFirst = resolve; });
-    db.ref(`jars/${jarId}`).on('value', snap => {
-      const data = snap.val();
-      if (!data || !data.onboarded) {
-        document.getElementById('s-dash').classList.add('hidden');
-        document.getElementById('s-onboard').classList.remove('hidden');
-        initOnboarding();
-        if (resolveFirst) { resolveFirst(data); resolveFirst = null; }
-        return;
-      }
-      document.getElementById('s-onboard').classList.add('hidden');
+
+    const renderApp = (data) => {
+      document.getElementById('s-user-onboard').classList.add('hidden');
       currentJar = data;
       document.getElementById('dash-name').textContent = data.name;
       setRing(data.total || 0, data.goal || 150);
@@ -1779,6 +2086,36 @@ function initDashboard() {
       document.getElementById('s-dash').classList.remove('hidden');
       maybeAutoCharge(data);
       if (resolveFirst) { resolveFirst(data); resolveFirst = null; }
+      resolveAppEntered();
+    };
+
+    db.ref(`jars/${jarId}`).on('value', snap => {
+      const data = snap.val();
+      if (!data || !data.onboarded) {
+        document.getElementById('s-dash').classList.add('hidden');
+        document.getElementById('s-user-onboard').classList.add('hidden');
+        document.getElementById('s-onboard').classList.remove('hidden');
+        initOnboarding();
+        if (resolveFirst) { resolveFirst(data); resolveFirst = null; }
+        return;
+      }
+      document.getElementById('s-onboard').classList.add('hidden');
+      currentJar = data;
+
+      if (!appEntered) {
+        if (needsUserOnboarding()) {
+          document.getElementById('s-dash').classList.add('hidden');
+          document.getElementById('s-user-onboard').classList.remove('hidden');
+          if (!userOnboardingStarted) {
+            userOnboardingStarted = true;
+            initUserOnboarding(() => { appEntered = true; renderApp(data); });
+          }
+          if (resolveFirst) { resolveFirst(data); resolveFirst = null; }
+          return;
+        }
+        appEntered = true;
+      }
+      renderApp(data);
     });
   }
 }
@@ -1836,6 +2173,7 @@ window.addEventListener('popstate', () => {
 async function init() {
   initDashboard();
   if (screen === 'pay') {
+    await appEnteredPromise;
     await openPaymentSheet();
   }
 }
