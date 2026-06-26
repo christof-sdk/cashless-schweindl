@@ -15,6 +15,14 @@ Guidance for Claude Code when working in this repository.
 - Vercel for hosting + a small set of serverless functions (`api/*.js`) for Stripe — this is the **one deviation** from "no backend": Stripe requires a secret key that can never live in client code
 - Stripe REST API called directly via `fetch()` in the serverless functions — **no `stripe` npm package**, to avoid introducing a build step for a project that otherwise has none
 
+## Deployment
+
+- **Deploy = `git push` to `main`.** The repo has Vercel's GitHub integration connected; every push to `main` auto-triggers a production deploy. No `vercel` CLI needed, no build step (single static `index.html`, no frontend `package.json`; `api/*.js` are dependency-free Vercel Node serverless functions).
+- **Firebase Realtime Database rules are NOT auto-deployed.** `database.rules.json` in the repo is a draft/mirror only — after editing it, the content must be manually pasted into Firebase Console → Realtime Database → Rules → Publish. No Firebase CLI/service-account wiring exists in this repo to automate that. **Ask the user before changing DB rules** — it's a manual, easily-forgotten step that should be coordinated with them.
+- **Secrets live only in Vercel project env vars**, never in the repo: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `FIREBASE_DATABASE_SECRET`. Never write these into code or echo them in chat.
+- **Local testing is limited.** `npx serve -p 3000 .` shows the frontend only — `api/*.js` functions don't run locally (no Vercel runtime emulator set up). Test those live via `curl https://cashless-schweindl.vercel.app/api/...` only after pushing.
+- **After pushing:** wait ~15–20s, then check the Vercel dashboard or hit the live site/API to confirm the deploy landed.
+
 ## Routing
 
 - `/jar/{id}` → dashboard, `/jar/{id}/pay` → payment screen, both rewritten to `index.html` via `vercel.json`; the page parses `window.location.pathname` itself
@@ -120,9 +128,9 @@ Today there is exactly **one** Stripe account for the whole deployment — every
 
 ## Testing Notes
 
-- Local `npx serve` cannot run the `api/*.js` serverless functions — those only work once deployed to Vercel. Test them live via `curl` against `https://cashless-schweindl.vercel.app/api/...`.
-- Local `serve` also doesn't reliably apply the `/jar/:id` rewrites from `serve.json` when run from the parent multi-project directory — load `index.html` directly and drive state via `db.ref(...)` in the console, or run `serve` rooted in this directory specifically.
-- Firebase Realtime Database rules are defined in `database.rules.json` (schema validation + `payerProfiles` locked to owner `auth.uid`) — **must be manually pasted into the Firebase Console → Realtime Database → Rules and published**; nothing in this repo deploys them automatically (no Firebase CLI/service account wired up). `/jars/*` itself is still open read/write (by design — there's no per-jar auth concept), but Stripe identities no longer live there.
+- See Deployment above for the general local-testing/`api/*.js`/rules-publishing limitations.
+- Local `serve` doesn't reliably apply the `/jar/:id` rewrites from `serve.json` when run from the parent multi-project directory — load `index.html` directly and drive state via `db.ref(...)` in the console, or run `serve` rooted in this directory specifically.
+- `database.rules.json` defines schema validation + `payerProfiles` locked to owner `auth.uid`. `/jars/*` itself is still open read/write (by design — there's no per-jar auth concept), but Stripe identities no longer live there.
 
 ## Open TODOs
 
