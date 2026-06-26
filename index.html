@@ -891,15 +891,13 @@ function getPayerInfo() {
     paymentMethodId: localStorage.getItem('payerPaymentMethodId'),
     cardBrand: localStorage.getItem('payerCardBrand'),
     cardLast4: localStorage.getItem('payerCardLast4'),
-    screenName: localStorage.getItem('payerScreenName'),
   };
 }
-async function savePayerInfo(customerId, paymentMethodId, cardBrand, cardLast4, screenName) {
+async function savePayerInfo(customerId, paymentMethodId, cardBrand, cardLast4) {
   localStorage.setItem('payerCustomerId', customerId);
   localStorage.setItem('payerPaymentMethodId', paymentMethodId);
   if (cardBrand) localStorage.setItem('payerCardBrand', cardBrand);
   if (cardLast4) localStorage.setItem('payerCardLast4', cardLast4);
-  if (screenName) localStorage.setItem('payerScreenName', screenName);
   if (!DEMO_MODE) {
     const uid = await payerReadyPromise;
     if (uid) {
@@ -907,13 +905,29 @@ async function savePayerInfo(customerId, paymentMethodId, cardBrand, cardLast4, 
         customerId, paymentMethodId,
         cardBrand: cardBrand || null,
         cardLast4: cardLast4 || null,
-        screenName: screenName || null,
       });
     }
   }
 }
+
+// Display name shown on the dashboard's transaction list — deliberately NOT
+// part of payerProfiles/getPayerInfo above. It has nothing to do with Stripe
+// or card auth, is never sent to /api/*, and must keep working (or be
+// changeable) independently of whether this device has a card at all.
+function getDisplayName() {
+  return localStorage.getItem('payerScreenName');
+}
+async function saveDisplayName(name) {
+  if (!name) return;
+  localStorage.setItem('payerScreenName', name);
+  if (!DEMO_MODE) {
+    const uid = await payerReadyPromise;
+    if (uid) await db.ref(`payerDisplayNames/${uid}`).set({ name });
+  }
+}
+
 function forgetPayerCard() {
-  ['payerCustomerId', 'payerPaymentMethodId', 'payerCardBrand', 'payerCardLast4', 'payerScreenName'].forEach(k => localStorage.removeItem(k));
+  ['payerCustomerId', 'payerPaymentMethodId', 'payerCardBrand', 'payerCardLast4'].forEach(k => localStorage.removeItem(k));
   if (!DEMO_MODE) {
     payerReadyPromise.then(uid => {
       if (uid) return db.ref(`payerProfiles/${uid}`).remove();
@@ -972,7 +986,7 @@ if (!DEMO_MODE) {
     .catch(e => { console.error('Anonyme Anmeldung fehlgeschlagen:', e); return null; })
     .then(async (uid) => {
       if (!uid) return null;
-      const { customerId, paymentMethodId, cardBrand, cardLast4, screenName } = getPayerInfo();
+      const { customerId, paymentMethodId, cardBrand, cardLast4 } = getPayerInfo();
       if (customerId && paymentMethodId) {
         try {
           const snap = await db.ref(`payerProfiles/${uid}`).once('value');
@@ -981,7 +995,6 @@ if (!DEMO_MODE) {
               customerId, paymentMethodId,
               cardBrand: cardBrand || null,
               cardLast4: cardLast4 || null,
-              screenName: screenName || null,
             });
           }
         } catch (e) {
@@ -1334,8 +1347,12 @@ function showPayCardGate() {
         console.error('Kartendetails konnten nicht geladen werden:', e);
       }
 
+      await savePayerInfo(setupData.customerId, pmId, cardBrand, cardLast4);
+      // Two independent writes on purpose — the display name has nothing to
+      // do with the card itself, it just happens to be asked for on the same
+      // screen today (see CLAUDE.md).
       const screenName = document.getElementById('pay-card-screenname').value.trim().slice(0, 40);
-      await savePayerInfo(setupData.customerId, pmId, cardBrand, cardLast4, screenName);
+      await saveDisplayName(screenName);
       updatePaymentsIconStatus();
       document.getElementById('pay-card-gate').classList.add('hidden');
       document.getElementById('pay-amount-card').classList.remove('hidden');
@@ -1354,9 +1371,11 @@ async function doTap() {
   const tap = { amount: tapAmount, timestamp: Date.now(), status: hasPaymentMethod ? 'pending' : 'confirmed' };
   if (hasPaymentMethod) {
     tap.payerUid = uid;
-    const { screenName } = getPayerInfo();
-    if (screenName) tap.payerName = screenName;
   }
+  // Independent of whether this device has a card — a display name is just a
+  // label, it should show up on confirmed (no-card) taps too.
+  const displayName = getDisplayName();
+  if (displayName) tap.payerName = displayName;
 
   if (!DEMO_MODE) {
     try {

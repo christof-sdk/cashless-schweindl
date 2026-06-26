@@ -46,7 +46,17 @@
         "paymentMethodId": { ".validate": "newData.isString() && newData.val().matches(/^pm_[A-Za-z0-9]+$/)" },
         "cardBrand": { ".validate": "newData.isString()" },
         "cardLast4": { ".validate": "newData.isString()" },
-        "screenName": { ".validate": "newData.isString() && newData.val().length <= 40" },
+
+        "$other": { ".validate": false }
+      }
+    },
+
+    "payerDisplayNames": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+
+        "name": { ".validate": "newData.isString() && newData.val().length <= 40" },
 
         "$other": { ".validate": false }
       }
