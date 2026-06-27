@@ -35,6 +35,7 @@
       --c-ring-sub: #340068;
       --c-pay-heading: #340068;
       --c-amount-card-bg: #ff8a96;
+      --c-amount-card-border: rgba(51,51,51,0.4);
       --c-amount-card-text: #340068;
       --c-ctrl-bg: #fffcf9;
       --c-ctrl-fg: #340068;
@@ -63,7 +64,7 @@
     }
     html[data-theme="2"] {
       --c-bg-top: #1f2041;
-      --c-pay-bg: #f2c94c;
+      --c-pay-bg: #4b3f72;
       --c-bg-panel: #fbffe3;
       --c-pill-border: #000000;
       --c-icon: #fffcf9;
@@ -79,11 +80,12 @@
       --c-ring-fill: #f2c94c;
       --c-ring-total: #ffffff;
       --c-ring-sub: #fbffe3;
-      --c-pay-heading: #1f2041;
-      --c-amount-card-bg: #50516b;
+      --c-pay-heading: #fbffe3;
+      --c-amount-card-bg: transparent;
+      --c-amount-card-border: transparent;
       --c-amount-card-text: #fbffe3;
-      --c-ctrl-bg: #50516b;
-      --c-ctrl-fg: #fbffe3;
+      --c-ctrl-bg: #f2c94c;
+      --c-ctrl-fg: #1f2041;
       --c-pill-bg: #fbffe3;
       --c-chevron: #1f2041;
       --c-thumb-ring: #f2c94c;
@@ -246,7 +248,7 @@
 
     .pay-amount-card {
       display: flex; flex-direction: column; align-items: center;
-      background: var(--c-amount-card-bg); border: 1px solid rgba(51,51,51,0.4);
+      background: var(--c-amount-card-bg); border: 1px solid var(--c-amount-card-border);
       border-radius: 16px; padding: 8px 20px;
       flex-shrink: 0; margin: 10px 0;
     }
