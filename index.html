@@ -58,6 +58,8 @@
       --c-badge-alert-bg: #fffcf9;
       --c-badge-alert-fg: #340068;
       --c-active-dot: #ff6978;
+      --c-stat-label: rgba(52,0,104,0.65);
+      --c-stat-divider: rgba(52,0,104,0.25);
     }
     html[data-theme="2"] {
       --c-bg-top: #1f2041;
@@ -102,6 +104,8 @@
       --c-badge-alert-bg: #fbffe3;
       --c-badge-alert-fg: #1f2041;
       --c-active-dot: #f2c94c;
+      --c-stat-label: rgba(255,252,249,0.65);
+      --c-stat-divider: rgba(255,252,249,0.3);
     }
 
     html, body { height: 100%; overflow: hidden; font-family: 'Lato', sans-serif; background: var(--c-bg-top); }
@@ -138,6 +142,25 @@
     .dash-jar-name {
       font-size: clamp(20px, 6vw, 30px); font-weight: 700; color: var(--c-jar-name);
       text-align: center; padding: 6px 16px 14px;
+    }
+
+    .dash-stats {
+      display: flex; gap: 16px;
+      width: min(320px, 100%);
+      padding-bottom: 18px;
+    }
+    .dash-stat {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .dash-stat-value {
+      font-size: 28px; font-weight: 700; color: var(--c-jar-name);
+    }
+    .dash-stat-divider {
+      width: 35px; height: 1px; background: var(--c-stat-divider); border: none;
+    }
+    .dash-stat-label {
+      font-size: 14px; font-weight: 400; color: var(--c-stat-label); text-align: center;
     }
 
     .wave { display: block; width: 100%; flex-shrink: 0; }
@@ -692,6 +715,24 @@
     </div>
 
     <p class="dash-jar-name" id="dash-name">…</p>
+
+    <div class="dash-stats">
+      <div class="dash-stat">
+        <span class="dash-stat-value" id="stat-deposits">00</span>
+        <hr class="dash-stat-divider">
+        <span class="dash-stat-label">Einzahlungen</span>
+      </div>
+      <div class="dash-stat">
+        <span class="dash-stat-value" id="stat-streak">00</span>
+        <hr class="dash-stat-divider">
+        <span class="dash-stat-label">Tages-Streak</span>
+      </div>
+      <div class="dash-stat">
+        <span class="dash-stat-value" id="stat-payers">00</span>
+        <hr class="dash-stat-divider">
+        <span class="dash-stat-label">SparerInnen</span>
+      </div>
+    </div>
   </div>
 
   <!-- Wave between teal and cream -->
@@ -1200,6 +1241,50 @@ function renderTx(taps) {
   txList = taps ? Object.values(taps).sort((a, b) => b.timestamp - a.timestamp) : [];
   txExpanded = false;
   renderTxList();
+  renderDashStats(txList);
+}
+
+// ── DASHBOARD STATS ────────────────────────────────────────────────────────────
+const pad2 = n => String(n).padStart(2, '0');
+const dayKey = d => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+function computeDayStreak(taps) {
+  const days = new Set(taps.map(t => dayKey(new Date(t.timestamp))));
+  let cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  // If nothing happened yet today, check from yesterday instead — otherwise an
+  // ongoing streak would falsely show as broken every day until the first tap.
+  if (!days.has(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (days.has(dayKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+// Distinct payers, best-effort: payerUid is the reliable identity when a card
+// is on file, payerName is the fallback for no-card taps with a display name.
+// Taps with neither are anonymous and indistinguishable from each other, so
+// they're grouped into a single shared bucket rather than counted one-by-one
+// (which would wildly overcount, since "no card, no name" is the common case
+// for casual tappers).
+function computeUniquePayers(taps) {
+  const keys = new Set();
+  let hasAnon = false;
+  taps.forEach(t => {
+    if (t.payerUid) keys.add(`uid:${t.payerUid}`);
+    else if (t.payerName) keys.add(`name:${t.payerName}`);
+    else hasAnon = true;
+  });
+  if (hasAnon) keys.add('__anon__');
+  return keys.size;
+}
+
+function renderDashStats(taps) {
+  document.getElementById('stat-deposits').textContent = pad2(taps.length);
+  document.getElementById('stat-streak').textContent = pad2(computeDayStreak(taps));
+  document.getElementById('stat-payers').textContent = pad2(computeUniquePayers(taps));
 }
 
 function renderTxList() {

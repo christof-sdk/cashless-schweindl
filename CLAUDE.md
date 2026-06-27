@@ -109,6 +109,15 @@ Today there is exactly **one** Stripe account for the whole deployment — every
 - **About**/**Impressum** are currently placeholder text — real content (and a real legal Impressum, if required) still needs to be written; not a code task.
 - Payment screen is a full-screen action sheet (`#s-pay`, slides up via `.show` class + `transform`), not a separate page — opened via `history.pushState('/jar/{id}/pay')` and `openPaymentSheet()`, closed via `history.pushState('/jar/{id}')` and `closePaymentSheet()`. Direct NFC deep links to `/jar/{id}/pay` still work: the dashboard always initializes first, then the sheet opens itself if the URL matches on load. A `popstate` listener keeps browser back/forward in sync. `resetPaymentSheetState()` must run on every open — since the sheet persists across open/close (no more full reloads), leftover animation classes (checkmark drawn, pig wiggled, vanished amount card) would otherwise carry over from the previous tap.
 
+## Dashboard Stats
+
+Three numbers (`Einzahlungen` / `Tages-Streak` / `SparerInnen`) sit between the jar name and the wave, computed client-side from `taps` whenever `renderTx()` runs (`renderDashStats()` in `index.html`) — no new Firebase fields, derived purely from existing tap data. Figma reference: node `114:351` (colors there are from an older palette and were not followed — see Color Schemes for the real tokens).
+
+- **Einzahlungen**: `taps.length` — every tap counts regardless of `pending`/`confirmed`/`charging` status, per explicit instruction (a deposit "happened" the moment it's tapped, billing status is a separate concern).
+- **Tages-Streak**: consecutive calendar days (local time) with ≥1 tap, counted backward from today. If today has no tap yet, counting starts from yesterday instead of immediately reporting a broken streak — otherwise the streak would falsely show as 0 every day until the first tap, then jump back up.
+- **SparerInnen**: distinct payers, best-effort. Groups by `payerUid` when present, falls back to `payerName` for no-card taps with a display name, and buckets every tap with *neither* into one shared `__anon__` key rather than counting each anonymous tap as a separate person — those taps are indistinguishable from each other, and counting them individually would wildly overcount casual no-card tappers (the common case for this prototype).
+- All three are zero-padded to 2 digits (`05`, not `5`) purely cosmetic, matching the Figma reference.
+
 ## Color Schemes
 
 - Two color schemes ship today — **Schema 1** (coral `#ff6978` / deep purple `#340068` / cream-white `#fffcf9`, the default) and **Schema 2** (navy `#1f2041` / gold `#f2c94c` / cream `#fbffe3` / slate-purple `#50516b`), sourced from Figma nodes `87:259`/`87:314` (Schema 1) and `67:346`/`67:369` (Schema 2).
