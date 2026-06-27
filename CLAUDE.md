@@ -118,6 +118,13 @@ Three numbers (`Einzahlungen` / `Tages-Streak` / `SparerInnen`) sit between the 
 - **SparerInnen**: distinct payers, best-effort. Groups by `payerUid` when present, falls back to `payerName` for no-card taps with a display name, and buckets every tap with *neither* into one shared `__anon__` key rather than counting each anonymous tap as a separate person — those taps are indistinguishable from each other, and counting them individually would wildly overcount casual no-card tappers (the common case for this prototype).
 - All three are zero-padded to 2 digits (`05`, not `5`) purely cosmetic, matching the Figma reference.
 
+### Typography (dash-top)
+
+Figma's `114:351` revision shifted weights on the dash-top text — picked up here, colors still ignored (tokens, not literal hex):
+- **Current amount** (`.ring-total`, "€ 75,50"): stays **Lato Bold**.
+- **Savings goal** (`.ring-sub`, "von € 150,00"): now **Lato Light** (`font-weight: 300`) — was Bold.
+- **Jar name** (`.dash-jar-name`): now **Lato Light** (`font-weight: 300`) at a larger size (`clamp(22px, 7.5vw, 34px)`, was `clamp(20px, 6vw, 30px)` Bold) — needed adding weight `300` to the Google Fonts `<link>` (previously only 400/700 were loaded).
+
 ## Color Schemes
 
 - Two color schemes ship today — **Schema 1** (coral `#ff6978` / deep purple `#340068` / cream-white `#fffcf9`, the default) and **Schema 2** (navy `#1f2041` / gold `#f2c94c` / cream `#fbffe3` / slate-purple `#50516b`), sourced from Figma nodes `87:259`/`87:314` (Schema 1) and `67:346`/`67:369` (Schema 2).
