@@ -227,7 +227,7 @@
     .pay-spacer { flex: 1 1 auto; min-height: 8px; }
 
     .pay-header {
-      display: flex; align-items: center;
+      display: flex; align-items: center; justify-content: flex-end;
       width: 100%; padding: 20px 20px 8px; flex-shrink: 0;
     }
 
@@ -237,9 +237,9 @@
     }
 
     .pay-name {
-      flex: 1; text-align: center;
-      font-size: clamp(24px, 8.5vw, 32px); font-weight: 700; color: var(--c-pay-heading);
-      margin-left: 34px;
+      text-align: center;
+      font-size: clamp(22px, 7.5vw, 34px); font-weight: 300; color: var(--c-pay-heading);
+      margin-top: 12px;
     }
 
     .pig-img { width: min(45vw, 170px); height: auto; flex-shrink: 0; }
@@ -752,7 +752,6 @@
 <!-- ── PAYMENT SCREEN ────────────────────────────── -->
 <div id="s-pay" class="screen hidden">
   <div class="pay-header">
-    <span class="pay-name" id="pay-name">…</span>
     <button class="close-btn" id="close-pay-btn">×</button>
   </div>
 
@@ -792,6 +791,8 @@
       <clipPath id="pig-clip-1"><rect width="228" height="191.721" fill="white"/></clipPath>
     </defs>
   </svg>
+
+  <p class="pay-name" id="pay-name">…</p>
 
   <div class="pay-spacer"></div>
 
