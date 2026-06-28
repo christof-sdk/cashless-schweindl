@@ -955,13 +955,18 @@
 </div>
 
 <!-- ── SPARZIEL ERREICHT ─────────────────────────── -->
+<!-- Two modes: the owner device gets the decision (weitersparen / zurücksetzen);
+     anyone else who happens to trigger the crossing only gets a notice — see
+     "Goal-reached celebration" in CLAUDE.md for why. -->
 <div id="goal-reached-overlay" class="celebration-overlay hidden">
   <div class="celebration-sheet">
     <p class="celebration-emoji">🎉</p>
     <h2 class="celebration-title">Sparziel erreicht!</h2>
-    <p class="celebration-text">Gratuliere, du hast dein Sparziel erreicht. Möchtest du weitersparen oder das Schweinchen zurücksetzen?</p>
+    <p class="celebration-text" id="goal-reached-text-decision">Gratuliere, du hast dein Sparziel erreicht. Möchtest du weitersparen oder das Schweinchen zurücksetzen?</p>
+    <p class="celebration-text hidden" id="goal-reached-text-notice">Gratuliere, ihr habt euer Sparziel erreicht! Der Besitzer/die Besitzerin des Schweinchens entscheidet, wie es weitergeht.</p>
     <button class="settings-save" id="goal-reached-keep">Weitersparen</button>
     <button class="celebration-reset" id="goal-reached-reset">Schweinchen zurücksetzen</button>
+    <button class="settings-save hidden" id="goal-reached-ok">Super!</button>
   </div>
 </div>
 
@@ -1654,12 +1659,12 @@ async function doTap() {
 
   const jar = currentJar || {};
   const goalJustReached = jar.goalEnabled !== false && jar.goal > 0
-    && totalBefore < jar.goal && totalAfter >= jar.goal && !jar.goalCelebrated;
+    && totalBefore < jar.goal && totalAfter >= jar.goal && !jar.goalReachedPending;
   if (goalJustReached) {
     if (!DEMO_MODE) {
-      await db.ref(`jars/${jarId}`).update({ goalCelebrated: true }).catch(() => {});
+      await db.ref(`jars/${jarId}`).update({ goalReachedPending: true }).catch(() => {});
     } else {
-      DEMO_JAR.goalCelebrated = true;
+      DEMO_JAR.goalReachedPending = true;
     }
   }
 
@@ -1686,7 +1691,7 @@ async function doTap() {
   await new Promise(r => setTimeout(r, 2100));
 
   closePaymentSheet();
-  if (goalJustReached) runGoalReachedCelebration();
+  if (goalJustReached) runGoalReachedCelebration(isOwnerDevice());
 }
 
 function spawnConfetti() {
@@ -1712,7 +1717,15 @@ function spawnConfetti() {
   setTimeout(() => layer.remove(), 2200);
 }
 
-function openGoalReachedSheet() {
+// showDecision: true for the owner device (gets to choose weitersparen vs.
+// zurücksetzen), false for anyone else (just a congratulatory notice — only
+// the owner is allowed to decide what happens to the jar).
+function openGoalReachedSheet(showDecision) {
+  document.getElementById('goal-reached-text-decision').classList.toggle('hidden', !showDecision);
+  document.getElementById('goal-reached-text-notice').classList.toggle('hidden', showDecision);
+  document.getElementById('goal-reached-keep').classList.toggle('hidden', !showDecision);
+  document.getElementById('goal-reached-reset').classList.toggle('hidden', !showDecision);
+  document.getElementById('goal-reached-ok').classList.toggle('hidden', showDecision);
   const overlay = document.getElementById('goal-reached-overlay');
   overlay.classList.remove('hidden');
   requestAnimationFrame(() => overlay.classList.add('show'));
@@ -1722,9 +1735,16 @@ function closeGoalReachedSheet() {
   overlay.classList.remove('show');
   setTimeout(() => overlay.classList.add('hidden'), 300);
 }
-function runGoalReachedCelebration() {
+function runGoalReachedCelebration(showDecision) {
   spawnConfetti();
-  setTimeout(openGoalReachedSheet, 900);
+  setTimeout(() => openGoalReachedSheet(showDecision), 900);
+}
+async function resolveGoalReachedPending() {
+  if (!DEMO_MODE) {
+    await db.ref(`jars/${jarId}`).update({ goalReachedPending: false }).catch(() => {});
+  } else {
+    DEMO_JAR.goalReachedPending = false;
+  }
 }
 
 function spawnSparkles(container, centerX, centerY) {
@@ -1757,6 +1777,10 @@ function spawnSparkles(container, centerX, centerY) {
 // Entering "Schwein" gates once via withSettingsAuth(); everything underneath
 // reuses that same unlocked session (settingsUnlocked).
 let currentJar = null;
+// Checked once per page load (not on every snapshot re-render) so the owner
+// gets asked exactly once per app open if a pending goal-reached decision is
+// waiting — see runGoalReachedCelebration()/resolveGoalReachedPending().
+let ownerGoalCheckDone = false;
 let drawerStack = [];
 
 const CHEVRON_SVG = '<svg class="chevron" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 3.75L13.75 10L7.5 16.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -2023,13 +2047,13 @@ async function saveGoal() {
   if (goal) {
     updates.goal = goal; // keep last typed value even if just disabled, so re-enabling restores it
     // A freshly-raised target should be celebrate-able again on the next crossing.
-    if (goal !== currentJar?.goal) updates.goalCelebrated = false;
+    if (goal !== currentJar?.goal) updates.goalReachedPending = false;
   }
   if (!DEMO_MODE) {
     await db.ref(`jars/${jarId}`).update(updates);
   } else {
     if (goal) {
-      if (goal !== DEMO_JAR.goal) DEMO_JAR.goalCelebrated = false;
+      if (goal !== DEMO_JAR.goal) DEMO_JAR.goalReachedPending = false;
       DEMO_JAR.goal = goal;
     }
     DEMO_JAR.goalEnabled = goalEnabled;
@@ -2387,11 +2411,15 @@ function initDashboard() {
     if (e.target.id === 'settings-drawer') closeDrawer();
   };
 
-  document.getElementById('goal-reached-keep').onclick = closeGoalReachedSheet;
+  document.getElementById('goal-reached-keep').onclick = () => {
+    closeGoalReachedSheet();
+    resolveGoalReachedPending();
+  };
   document.getElementById('goal-reached-reset').onclick = () => {
     closeGoalReachedSheet();
     withSettingsAuth(resetJar);
   };
+  document.getElementById('goal-reached-ok').onclick = closeGoalReachedSheet;
 
   let resolveAppEntered;
   appEnteredPromise = new Promise(resolve => { resolveAppEntered = resolve; });
@@ -2405,6 +2433,12 @@ function initDashboard() {
     document.getElementById('s-dash').classList.remove('hidden');
     dashboardDataPromise = Promise.resolve(DEMO_JAR);
     resolveAppEntered();
+    if (!ownerGoalCheckDone) {
+      ownerGoalCheckDone = true;
+      if (isOwnerDevice() && DEMO_JAR.goalReachedPending) {
+        setTimeout(() => openGoalReachedSheet(true), 400);
+      }
+    }
   } else {
     let resolveFirst;
     let appEntered = false;
@@ -2422,6 +2456,12 @@ function initDashboard() {
       maybeAutoCharge(data);
       if (resolveFirst) { resolveFirst(data); resolveFirst = null; }
       resolveAppEntered();
+      if (!ownerGoalCheckDone) {
+        ownerGoalCheckDone = true;
+        if (isOwnerDevice() && data.goalReachedPending) {
+          setTimeout(() => openGoalReachedSheet(true), 400);
+        }
+      }
     };
 
     db.ref(`jars/${jarId}`).on('value', snap => {
