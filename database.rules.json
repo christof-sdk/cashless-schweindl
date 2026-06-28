@@ -17,6 +17,7 @@
         "payoutThreshold": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1000" },
         "colorScheme": { ".validate": "newData.isString() && (newData.val() == '1' || newData.val() == '2')" },
         "goalEnabled": { ".validate": "newData.isBoolean()" },
+        "goalCelebrated": { ".validate": "newData.isBoolean()" },
         "ownerUid": { ".validate": "!data.exists() && auth != null && newData.val() === auth.uid" },
 
         "taps": {

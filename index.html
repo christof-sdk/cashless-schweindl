@@ -479,6 +479,53 @@
     }
     .settings-save:active { transform: scale(0.97); }
 
+    /* Goal-reached celebration */
+    .celebration-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 110;
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .celebration-overlay.show { opacity: 1; pointer-events: auto; }
+    .celebration-sheet {
+      background: var(--c-sheet-bg);
+      width: 100%; max-width: 480px;
+      border-radius: 24px 24px 0 0;
+      padding: 32px 24px 28px;
+      text-align: center;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.2);
+    }
+    .celebration-overlay.show .celebration-sheet { transform: translateY(0); }
+    .celebration-emoji { font-size: 48px; margin-bottom: 12px; }
+    .celebration-title {
+      font-family: 'Lato', sans-serif; font-weight: 700; font-size: 22px;
+      color: var(--c-strong-text); margin-bottom: 10px;
+    }
+    .celebration-text {
+      font-family: 'Lato', sans-serif; font-size: 15px; color: var(--c-muted);
+      margin-bottom: 4px; line-height: 1.4;
+    }
+    .celebration-reset {
+      display: block; width: 100%; margin-top: 14px;
+      background: none; border: none; color: #b35c4a; font-weight: 700;
+      font-family: 'Lato', sans-serif; font-size: 15px; padding: 10px;
+      cursor: pointer; text-decoration: underline;
+    }
+
+    .confetti-layer { position: fixed; inset: 0; z-index: 120; pointer-events: none; overflow: hidden; }
+    .confetti-piece {
+      position: absolute; top: -20px; width: 8px; height: 14px; opacity: 0.9;
+      animation-name: confetti-fall; animation-timing-function: ease-in; animation-fill-mode: forwards;
+    }
+    @keyframes confetti-fall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(540deg); opacity: 0.85; }
+    }
+
     /* Farbschema toggle */
     .scheme-toggle {
       display: flex; gap: 8px; margin-top: 4px;
@@ -904,6 +951,17 @@
       <circle class="ctrl-circle" cx="36" cy="36" r="36"/>
       <path class="ctrl-icon" d="M36 0C45.5478 0 54.7047 3.79264 61.4561 10.5439C68.2074 17.2953 72 26.4522 72 36C72 45.5478 68.2074 54.7047 61.4561 61.4561C54.7047 68.2074 45.5478 72 36 72C26.4522 72 17.2953 68.2074 10.5439 61.4561C3.79264 54.7047 0 45.5478 0 36C3.82773e-07 26.4522 3.79264 17.2953 10.5439 10.5439C17.2953 3.79264 26.4522 3.82783e-07 36 0ZM36 4.78027C27.72 4.78027 19.7787 8.06896 13.9238 13.9238C8.06896 19.7787 4.78027 27.72 4.78027 36C4.78027 44.28 8.06896 52.2213 13.9238 58.0762C19.7787 63.931 27.72 67.2197 36 67.2197C44.28 67.2197 52.2213 63.931 58.0762 58.0762C63.931 52.2213 67.2197 44.28 67.2197 36C67.2197 27.72 63.931 19.7787 58.0762 13.9238C52.2213 8.06896 44.28 4.78027 36 4.78027ZM36 20.166C37.3199 20.166 38.3895 21.2358 38.3896 22.5557V33.6104H49.4443C50.7641 33.6106 51.834 34.6801 51.834 36C51.834 37.3198 50.7641 38.3894 49.4443 38.3896H38.3896V49.4443C38.3894 50.7641 37.3198 51.834 36 51.834C34.6801 51.834 33.6106 50.7641 33.6104 49.4443V38.3896H22.5557C21.2358 38.3895 20.166 37.3199 20.166 36C20.166 34.6801 21.2358 33.6105 22.5557 33.6104H33.6104V22.5557C33.6105 21.2358 34.6801 20.166 36 20.166Z"/>
     </svg>
+  </div>
+</div>
+
+<!-- ── SPARZIEL ERREICHT ─────────────────────────── -->
+<div id="goal-reached-overlay" class="celebration-overlay hidden">
+  <div class="celebration-sheet">
+    <p class="celebration-emoji">🎉</p>
+    <h2 class="celebration-title">Sparziel erreicht!</h2>
+    <p class="celebration-text">Gratuliere, du hast dein Sparziel erreicht. Möchtest du weitersparen oder das Schweinchen zurücksetzen?</p>
+    <button class="settings-save" id="goal-reached-keep">Weitersparen</button>
+    <button class="celebration-reset" id="goal-reached-reset">Schweinchen zurücksetzen</button>
   </div>
 </div>
 
@@ -1573,14 +1631,35 @@ async function doTap() {
   const displayName = getDisplayName();
   if (displayName) tap.payerName = displayName;
 
+  // Snapshot before/after total to detect a fresh goal crossing below — must
+  // come from this device's own write, not the (possibly delayed) listener,
+  // since only the tapping device should see the celebration (see CLAUDE.md).
+  let totalBefore = currentJar?.total || 0;
+  let totalAfter = totalBefore + tapAmount;
+
   if (!DEMO_MODE) {
     try {
       const ref = db.ref(`jars/${jarId}`);
       await db.ref(`jars/${jarId}/taps`).push(tap);
       const snap = await ref.child('total').once('value');
-      await ref.child('total').set((snap.val() || 0) + tapAmount);
+      totalBefore = snap.val() || 0;
+      totalAfter = totalBefore + tapAmount;
+      await ref.child('total').set(totalAfter);
     } catch (e) {
       console.error('Firebase Fehler:', e);
+    }
+  } else {
+    DEMO_JAR.total = totalAfter;
+  }
+
+  const jar = currentJar || {};
+  const goalJustReached = jar.goalEnabled !== false && jar.goal > 0
+    && totalBefore < jar.goal && totalAfter >= jar.goal && !jar.goalCelebrated;
+  if (goalJustReached) {
+    if (!DEMO_MODE) {
+      await db.ref(`jars/${jarId}`).update({ goalCelebrated: true }).catch(() => {});
+    } else {
+      DEMO_JAR.goalCelebrated = true;
     }
   }
 
@@ -1607,6 +1686,45 @@ async function doTap() {
   await new Promise(r => setTimeout(r, 2100));
 
   closePaymentSheet();
+  if (goalJustReached) runGoalReachedCelebration();
+}
+
+function spawnConfetti() {
+  const layer = document.createElement('div');
+  layer.className = 'confetti-layer';
+  document.body.appendChild(layer);
+
+  const root = getComputedStyle(document.documentElement);
+  const colors = ['--c-jar-name', '--c-ring-fill', '--c-thumb-ring', '--c-panel-btn-bg', '--c-amount-card-text']
+    .map(v => root.getPropertyValue(v).trim())
+    .filter(c => c && c !== 'transparent');
+
+  for (let i = 0; i < 48; i++) {
+    const piece = document.createElement('span');
+    piece.className = 'confetti-piece';
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)] || '#fff';
+    piece.style.animationDuration = `${1.2 + Math.random() * 0.8}s`;
+    piece.style.animationDelay = `${Math.random() * 0.4}s`;
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    layer.appendChild(piece);
+  }
+  setTimeout(() => layer.remove(), 2200);
+}
+
+function openGoalReachedSheet() {
+  const overlay = document.getElementById('goal-reached-overlay');
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => overlay.classList.add('show'));
+}
+function closeGoalReachedSheet() {
+  const overlay = document.getElementById('goal-reached-overlay');
+  overlay.classList.remove('show');
+  setTimeout(() => overlay.classList.add('hidden'), 300);
+}
+function runGoalReachedCelebration() {
+  spawnConfetti();
+  setTimeout(openGoalReachedSheet, 900);
 }
 
 function spawnSparkles(container, centerX, centerY) {
@@ -1902,11 +2020,18 @@ async function saveGoal() {
   if (goalEnabled && (!goal || goal < 1)) return;
 
   const updates = { goalEnabled };
-  if (goal) updates.goal = goal; // keep last typed value even if just disabled, so re-enabling restores it
+  if (goal) {
+    updates.goal = goal; // keep last typed value even if just disabled, so re-enabling restores it
+    // A freshly-raised target should be celebrate-able again on the next crossing.
+    if (goal !== currentJar?.goal) updates.goalCelebrated = false;
+  }
   if (!DEMO_MODE) {
     await db.ref(`jars/${jarId}`).update(updates);
   } else {
-    if (goal) DEMO_JAR.goal = goal;
+    if (goal) {
+      if (goal !== DEMO_JAR.goal) DEMO_JAR.goalCelebrated = false;
+      DEMO_JAR.goal = goal;
+    }
     DEMO_JAR.goalEnabled = goalEnabled;
     currentJar = DEMO_JAR;
     setGoalDisplay(DEMO_JAR);
@@ -2260,6 +2385,12 @@ function initDashboard() {
   document.getElementById('drawer-close-btn').onclick = closeDrawer;
   document.getElementById('settings-drawer').onclick = (e) => {
     if (e.target.id === 'settings-drawer') closeDrawer();
+  };
+
+  document.getElementById('goal-reached-keep').onclick = closeGoalReachedSheet;
+  document.getElementById('goal-reached-reset').onclick = () => {
+    closeGoalReachedSheet();
+    withSettingsAuth(resetJar);
   };
 
   let resolveAppEntered;
