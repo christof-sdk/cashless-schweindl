@@ -518,12 +518,17 @@
 
     .confetti-layer { position: fixed; inset: 0; z-index: 120; pointer-events: none; overflow: hidden; }
     .confetti-piece {
-      position: absolute; top: -20px; width: 8px; height: 14px; opacity: 0.9;
-      animation-name: confetti-fall; animation-timing-function: ease-in; animation-fill-mode: forwards;
+      position: absolute; bottom: 0; left: 50%; width: 8px; height: 14px; opacity: 0.95;
+      animation-name: confetti-burst; animation-fill-mode: forwards;
     }
-    @keyframes confetti-fall {
-      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(110vh) rotate(540deg); opacity: 0.85; }
+    /* Launched from bottom-center like a popper: fast rise + outward spread
+       (ease-out, ends at 35%), then gravity takes over and it rains back down
+       (ease-in, 35% → 100%) — each piece's actual distances come from the
+       --dx/--peak/--dx-end custom properties set per piece in spawnConfetti(). */
+    @keyframes confetti-burst {
+      0%   { transform: translate(-50%, 0) translate(0, 0) rotate(0deg); opacity: 1; animation-timing-function: cubic-bezier(0.15, 0.7, 0.3, 1); }
+      35%  { transform: translate(-50%, 0) translate(var(--dx), var(--peak)) rotate(var(--rot1)); opacity: 1; animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.4); }
+      100% { transform: translate(-50%, 0) translate(var(--dx-end), var(--rest)) rotate(var(--rot2)); opacity: 0.85; }
     }
 
     /* Farbschema toggle */
@@ -1704,17 +1709,28 @@ function spawnConfetti() {
     .map(v => root.getPropertyValue(v).trim())
     .filter(c => c && c !== 'transparent');
 
-  for (let i = 0; i < 48; i++) {
+  const vh = window.innerHeight || 800;
+  for (let i = 0; i < 60; i++) {
     const piece = document.createElement('span');
     piece.className = 'confetti-piece';
-    piece.style.left = `${Math.random() * 100}%`;
+    // Fountain spread: wide horizontal range, height of the launch varies per
+    // piece so the burst doesn't look like one flat wall of confetti.
+    const spread = (Math.random() - 0.5) * 2; // -1..1
+    const dx = spread * (110 + Math.random() * 170);
+    const dxEnd = dx + spread * (50 + Math.random() * 90); // keeps drifting outward while falling
+    const peak = -vh * (0.4 + Math.random() * 0.4);
+    piece.style.setProperty('--dx', `${dx}px`);
+    piece.style.setProperty('--dx-end', `${dxEnd}px`);
+    piece.style.setProperty('--peak', `${peak}px`);
+    piece.style.setProperty('--rest', `${30 + Math.random() * 40}px`);
+    piece.style.setProperty('--rot1', `${Math.random() * 360}deg`);
+    piece.style.setProperty('--rot2', `${360 + Math.random() * 360}deg`);
     piece.style.background = colors[Math.floor(Math.random() * colors.length)] || '#fff';
-    piece.style.animationDuration = `${1.2 + Math.random() * 0.8}s`;
-    piece.style.animationDelay = `${Math.random() * 0.4}s`;
-    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    piece.style.animationDuration = `${1.6 + Math.random() * 0.6}s`;
+    piece.style.animationDelay = `${Math.random() * 0.15}s`;
     layer.appendChild(piece);
   }
-  setTimeout(() => layer.remove(), 2200);
+  setTimeout(() => layer.remove(), 2600);
 }
 
 // showDecision: true for the owner device (gets to choose weitersparen vs.
@@ -1737,7 +1753,7 @@ function closeGoalReachedSheet() {
 }
 function runGoalReachedCelebration(showDecision) {
   spawnConfetti();
-  setTimeout(() => openGoalReachedSheet(showDecision), 900);
+  setTimeout(() => openGoalReachedSheet(showDecision), 1200);
 }
 async function resolveGoalReachedPending() {
   if (!DEMO_MODE) {
