@@ -550,13 +550,6 @@
       border-color: var(--c-sheet-btn-bg);
     }
 
-    .settings-reset {
-      display: block; width: 100%; margin-top: 4px;
-      background: none; color: #b35c4a; border: none;
-      padding: 10px; font-size: 15px; font-weight: 700;
-      font-family: 'Lato', sans-serif; cursor: pointer; text-decoration: underline;
-    }
-
     .settings-hint {
       font-family: 'Lato', sans-serif; font-size: 13px; color: var(--c-muted);
       margin-top: 8px;
@@ -1916,7 +1909,7 @@ const DRAWER_PAGES = {
   },
 
   schwein: {
-    title: 'Schwein',
+    title: 'Sparschwein konfigurieren',
     render(c) {
       c.innerHTML =
         drawerListItem('drawer-go-goal', 'Sparziel') +
@@ -2026,7 +2019,7 @@ const DRAWER_PAGES = {
   },
 
   account: {
-    title: 'Mein Account',
+    title: 'Benutzer- & Zahlungsdaten',
     render(c) {
       c.innerHTML =
         drawerListItem('drawer-go-nickname', 'Mein Nick-Name') +
@@ -2208,7 +2201,7 @@ function renderAccountCardStatus() {
         <span class="card-number">${cardLast4 ? `XXXX XXXX XXXX ${cardLast4}` : 'XXXX XXXX XXXX XXXX'}</span>
       </div>
       <p class="settings-hint">Die Kartendaten werden nur lokal auf diesem Gerät gespeichert — die eigentlichen Kartendaten liegen ausschließlich bei Stripe, nie auf unserem Server.</p>
-      <button class="settings-reset" id="account-forget-card">Karte vergessen</button>`;
+      ${drawerListItem('account-forget-card', 'Karte vergessen', true)}`;
     document.getElementById('account-forget-card').onclick = forgetCard;
   } else {
     holder.innerHTML = `
