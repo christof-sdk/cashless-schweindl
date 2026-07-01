@@ -704,6 +704,7 @@
       padding: 16px 10px 14px 16px; flex-shrink: 0;
       border-bottom: 1px solid rgba(0,0,0,0.1);
     }
+    .drawer-header.no-border { border-bottom-color: transparent; }
     .drawer-back {
       background: none; border: none; cursor: pointer;
       color: var(--c-strong-text); padding: 4px;
@@ -2089,6 +2090,7 @@ function renderDrawerPage(id) {
   const page = DRAWER_PAGES[id];
   document.getElementById('drawer-title').textContent = page.title;
   document.getElementById('drawer-back-btn').classList.toggle('hidden', drawerStack.length <= 1);
+  document.querySelector('.drawer-header').classList.toggle('no-border', id === 'root');
   const body = document.getElementById('drawer-body');
   body.innerHTML = page.desc ? `<p class="drawer-page-desc">${page.desc}</p>` : '';
   const container = document.createElement('div');
