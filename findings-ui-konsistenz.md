@@ -33,7 +33,7 @@ Referenzen sind `index.html:Zeile`.
   - Reine männliche Rollenbezeichnung ohne Gendering: „Kontoinhaber" (Placeholder, `1039`/`1963`)
   Vier unterschiedliche Ansätze im selben kleinen Interface, kein einheitlicher Stil.
 
-- [x] **1.8 „Sparziel"-Seite enthält mehr als das Sparziel.** → Titel bleibt „Sparziel". Korrektur: der Betrags-Input hatte gar kein eigenes Label — jetzt mit „Zielbetrag" beschriftet (Settings-Seite), macht den Unterschied zum übergeordneten „Sparziel" klarer.
+- [x] **1.8 „Sparziel"-Seite enthält mehr als das Sparziel.** → Titel bleibt „Sparziel". Finale Lösung (nach Korrektur): kein separates „Zielbetrag"-Label — stattdessen heißt der Toggle selbst „Zielbetrag festlegen", direkt gefolgt vom Eingabefeld. Abstand zwischen „Worauf sparst du?"-Block und „Zielbetrag festlegen"-Block auf 16px gesetzt.
   Die Settings-Subpage heißt schlicht „Sparziel" (`1931`), enthält aber auch das Namensfeld („Worauf sparst du?", `1936`). Die eigene Seitenbeschreibung sagt das zwar dazu („Name und Sparziel dieses Schweinchens auf dem Dashboard.", `1932`), aber der Seitentitel selbst suggeriert nur den Betrag.
 
 - [x] **1.9 „About" (Englisch) neben „Impressum"/„Hilfe & Kontakt" (Deutsch).** → Erledigt: auf „Über die App" geändert (Menüpunkt + Subpage-Titel).

@@ -1950,20 +1950,17 @@ const DRAWER_PAGES = {
       const enabled = currentJar?.goalEnabled !== false;
       c.innerHTML = `<div class="drawer-form">
         <label class="settings-label" for="settings-name">Worauf sparst du?</label>
-        <input class="settings-input" id="settings-name" type="text" placeholder="z.B. Urlaub" value="${escapeHtml(currentJar?.name || '')}" style="margin-bottom:8px;">
+        <input class="settings-input" id="settings-name" type="text" placeholder="z.B. Urlaub" value="${escapeHtml(currentJar?.name || '')}" style="margin-bottom:16px;">
         <label class="toggle-row">
-          <span class="toggle-row-label">Sparziel festlegen</span>
+          <span class="toggle-row-label">Zielbetrag festlegen</span>
           <span class="toggle-switch">
             <input type="checkbox" id="settings-goal-enabled" ${enabled ? 'checked' : ''}>
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
           </span>
         </label>
-        <div class="settings-goal-toggle-wrap${enabled ? '' : ' hidden'}" id="settings-goal-wrap">
-          <label class="settings-label" for="settings-goal">Zielbetrag</label>
-          <div class="settings-goal-wrap">
-            <input class="settings-input" id="settings-goal" type="number" min="1" step="1" placeholder="150" value="${currentJar?.goal || ''}">
-            <span class="settings-suffix">€</span>
-          </div>
+        <div class="settings-goal-wrap${enabled ? '' : ' hidden'}" id="settings-goal-wrap">
+          <input class="settings-input" id="settings-goal" type="number" min="1" step="1" placeholder="150" value="${currentJar?.goal || ''}">
+          <span class="settings-suffix">€</span>
         </div>
         <button class="settings-save" id="settings-save-goal">Speichern</button>
       </div>`;
