@@ -1939,9 +1939,8 @@ const DRAWER_PAGES = {
     render(c) {
       const enabled = currentJar?.goalEnabled !== false;
       c.innerHTML = `<div class="drawer-form">
-        <label class="settings-label" for="settings-name">Name</label>
-        <input class="settings-input" id="settings-name" type="text" placeholder="z.B. Urlaub" value="${escapeHtml(currentJar?.name || '')}">
-        <p class="settings-label">Sparziel</p>
+        <label class="settings-label" for="settings-name">Worauf sparst du?</label>
+        <input class="settings-input" id="settings-name" type="text" placeholder="z.B. Urlaub" value="${escapeHtml(currentJar?.name || '')}" style="margin-bottom:8px;">
         <label class="toggle-row">
           <span class="toggle-row-label">Sparziel festlegen</span>
           <span class="toggle-switch">
