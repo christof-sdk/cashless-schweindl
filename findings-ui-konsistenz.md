@@ -82,7 +82,7 @@ Referenzen sind `index.html:Zeile`.
 - [x] **3.4 Gleiche CSS-Klasse `.settings-charge`, zwei visuelle Stile.** → Erledigt: neue Modifier-Klasse `.settings-charge--primary` für den gefüllten Stil eingeführt, im Payment-Card-Gate-Button ergänzt; die kontextuelle `.pay-card-gate .settings-charge`-Override-Regel entfernt. Beide Varianten visuell geprüft.
   Auf der Account-Karte-Seite ist `.settings-charge` ein Outline-Button (Rahmen `var(--c-strong-text)`, transparenter Hintergrund, `585`–`592`). Im Payment-Card-Gate wird dieselbe Klasse per Override zu einem gefüllten Primär-Button (`603`: Hintergrund `var(--c-sheet-bg-text)`/`--c-sheet-btn-bg`). Gleiche Komponente, zwei Bedeutungsebenen (sekundär vs. primär) ohne eigenen Klassennamen dafür — auf Dauer verwirrend beim Weiterbauen, und der Nutzer sieht „dieselbe" Kartenaktion in zwei Stilen.
 
-- [ ] **3.5 Konfetti-Farbpalette ist in Schema 1 kaum bunt.**
+- [x] **3.5 Konfetti-Farbpalette ist in Schema 1 kaum bunt.** → Erledigt: Token-Liste auf 8 Kandidaten erweitert (`--c-bg-top`, `--c-flash`, `--c-ring-total` ergänzt) und per `Set` auf echte Wert-Duplikate entdoppelt statt nur auf „transparent" zu filtern — ergibt jetzt 5 tatsächlich unterschiedliche Farben in beiden Schemata (vorher: Schema 1 nur 3, Schema 2 sogar nur 2 durch Zufall).
   `spawnConfetti()` (`1724`) sampelt 5 Tokens: `--c-jar-name`, `--c-ring-fill`, `--c-thumb-ring`, `--c-panel-btn-bg`, `--c-amount-card-text`. In Schema 1 sind `--c-jar-name`, `--c-ring-fill` und `--c-amount-card-text` alle identisch `#340068` — von 5 „Konfetti-Farben" sind effektiv nur 3 unterschiedliche im Spiel (dunkles Lila, Rosa, Creme). Für einen Feier-Moment wirkt das ggf. weniger festlich/bunt als beabsichtigt.
 
 ---

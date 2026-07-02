@@ -1774,10 +1774,18 @@ function spawnConfetti() {
   layer.className = 'confetti-layer';
   document.body.appendChild(layer);
 
+  // A wider candidate list than we need, deduped by actual value — several
+  // of these tokens share the same hex within a given scheme (e.g.
+  // --c-jar-name/--c-ring-fill/--c-amount-card-text are all one purple in
+  // Schema 1), so sampling more candidates and dropping exact repeats is
+  // what actually yields a varied burst in both schemes rather than one
+  // dominant color three times over.
   const root = getComputedStyle(document.documentElement);
-  const colors = ['--c-jar-name', '--c-ring-fill', '--c-thumb-ring', '--c-panel-btn-bg', '--c-amount-card-text']
-    .map(v => root.getPropertyValue(v).trim())
-    .filter(c => c && c !== 'transparent');
+  const colors = [...new Set(
+    ['--c-bg-top', '--c-jar-name', '--c-ring-fill', '--c-thumb-ring', '--c-panel-btn-bg', '--c-amount-card-text', '--c-flash', '--c-ring-total']
+      .map(v => root.getPropertyValue(v).trim().toLowerCase())
+      .filter(c => c && c !== 'transparent')
+  )];
 
   const vh = window.innerHeight || 800;
   for (let i = 0; i < 60; i++) {
