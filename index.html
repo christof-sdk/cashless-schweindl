@@ -188,7 +188,7 @@
     .tx-list { flex: 1; padding: 16px 46px 96px; }
 
     .tx-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; }
-    .tx-item.pending { opacity: 0.6; }
+    .tx-item.pending { opacity: 0.6; cursor: pointer; }
     .tx-left { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
     .tx-name { font-size: clamp(15px, 4.5vw, 20px); font-weight: 700; color: var(--c-panel-text); }
     .tx-date-row { display: flex; align-items: center; gap: 4px; color: var(--c-panel-secondary); }
@@ -1541,6 +1541,13 @@ function renderTxList() {
       renderTxList();
     };
   }
+  // Delegated on the container (not per-row) since rows get replaced on
+  // every renderTxList() call — assigning .onclick here is idempotent.
+  el.onclick = (e) => {
+    if (!e.target.closest('.tx-item.pending')) return;
+    const threshold = currentJar?.payoutThreshold || 15;
+    alert(`Abrechnung ausstehend. Die Abrechnung erfolgt, sobald die Summe der von einer Person eingezahlten Beträge ${fmtEur(threshold)} übersteigt.`);
+  };
 }
 
 // ── PAYMENT AMOUNT ────────────────────────────────────────────────────────────
