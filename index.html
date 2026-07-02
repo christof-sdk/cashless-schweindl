@@ -1427,6 +1427,28 @@ function escapeHtml(str) {
   }[c]));
 }
 
+// Purely visual grouping ("AT32 1234 5678 9987 2345") — the spaces never
+// reach the stored value, see stripSpaces()/wireIbanInput() below.
+const stripSpaces = str => String(str).replace(/\s+/g, '');
+const formatIban = str => stripSpaces(str).replace(/(.{4})/g, '$1 ').trim();
+
+// Reformats on every input (including paste, which also fires 'input'),
+// re-grouping into 4s while keeping the caret after the same raw character
+// the user was just at — otherwise inserting a space mid-typing would
+// constantly bounce the caret to the end of the field.
+function wireIbanInput(el) {
+  el.oninput = () => {
+    const rawCharsBeforeCaret = stripSpaces(el.value.slice(0, el.selectionStart)).length;
+    el.value = formatIban(el.value);
+    let seen = 0, caret = el.value.length;
+    for (let i = 0; i < el.value.length; i++) {
+      if (el.value[i] !== ' ') seen++;
+      if (seen === rawCharsBeforeCaret) { caret = i + 1; break; }
+    }
+    el.setSelectionRange(caret, caret);
+  };
+}
+
 const CLOCK_ICON_SVG = '<svg class="tx-clock" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 0C7.5913 5.921e-09 9.11697 0.632594 10.2422 1.75781C11.3674 2.88303 12 4.4087 12 6C12 7.5913 11.3674 9.11697 10.2422 10.2422C9.11697 11.3674 7.5913 12 6 12C4.4087 12 2.88303 11.3674 1.75781 10.2422C0.632594 9.11697 5.92104e-09 7.5913 0 6C0 4.4087 0.632594 2.88303 1.75781 1.75781C2.88303 0.632594 4.4087 0 6 0ZM6 0.849609C4.63402 0.849609 3.32429 1.3925 2.3584 2.3584C1.3925 3.32429 0.849609 4.63402 0.849609 6C0.849609 7.36598 1.3925 8.67571 2.3584 9.6416C3.32429 10.6075 4.63402 11.1504 6 11.1504C7.36598 11.1504 8.67571 10.6075 9.6416 9.6416C10.6075 8.67571 11.1504 7.36598 11.1504 6C11.1504 4.63402 10.6075 3.32429 9.6416 2.3584C8.67571 1.3925 7.36598 0.849609 6 0.849609ZM6 3.58398C6.23458 3.58398 6.42477 3.77422 6.4248 4.00879V5.82324L8.78906 8.18945C8.9549 8.35536 8.95496 8.62418 8.78906 8.79004C8.62317 8.95569 8.35429 8.95581 8.18848 8.79004L5.69922 6.30078C5.6984 6.29996 5.69807 6.29867 5.69727 6.29785C5.62183 6.22118 5.5752 6.11606 5.5752 6V4.00879C5.57523 3.77422 5.76542 3.58398 6 3.58398Z" fill="currentColor"/></svg>';
 
 function renderTx(taps) {
@@ -1977,9 +1999,10 @@ const DRAWER_PAGES = {
     render(c) {
       c.innerHTML = `<div class="drawer-form">
         <input class="settings-input" id="settings-payout-holder" type="text" placeholder="Kontoinhaber:in" value="${escapeHtml(currentJar?.payoutAccountHolder || '')}">
-        <input class="settings-input" id="settings-payout-iban" type="text" placeholder="IBAN" value="${escapeHtml(currentJar?.payoutAccountIban || '')}" style="margin-top:10px;">
+        <input class="settings-input" id="settings-payout-iban" type="text" placeholder="IBAN" value="${escapeHtml(formatIban(currentJar?.payoutAccountIban || ''))}" style="margin-top:10px;">
         <button class="settings-save" id="settings-save-payout">Speichern</button>
       </div>`;
+      wireIbanInput(document.getElementById('settings-payout-iban'));
       document.getElementById('settings-save-payout').onclick = () => withSettingsAuth(savePayoutAccount);
     },
   },
@@ -2182,7 +2205,7 @@ async function saveNameAndGoal() {
 
 async function savePayoutAccount() {
   const payoutAccountHolder = document.getElementById('settings-payout-holder').value.trim();
-  const payoutAccountIban = document.getElementById('settings-payout-iban').value.trim();
+  const payoutAccountIban = stripSpaces(document.getElementById('settings-payout-iban').value);
   if (!payoutAccountHolder || !payoutAccountIban) return;
   if (!DEMO_MODE) {
     await db.ref(`jars/${jarId}`).update({ payoutAccountHolder, payoutAccountIban });
@@ -2371,6 +2394,7 @@ function initOnboarding() {
   document.getElementById('onboard-payout-iban').value = '';
   document.getElementById('onboard-payout-status').textContent = '';
   document.getElementById('onboard-settings-password').value = '';
+  wireIbanInput(document.getElementById('onboard-payout-iban'));
   showOnboardStep(0);
   document.getElementById('onboard-goal-enabled').onchange = (e) => {
     document.getElementById('onboard-goal-wrap').classList.toggle('hidden', !e.target.checked);
@@ -2384,7 +2408,7 @@ function initOnboarding() {
         && !parseInt(document.getElementById('onboard-goal').value, 10)) return;
     if (onboardStep === 2) {
       const holder = document.getElementById('onboard-payout-holder').value.trim();
-      const iban = document.getElementById('onboard-payout-iban').value.trim();
+      const iban = stripSpaces(document.getElementById('onboard-payout-iban').value);
       if (!holder || !iban) return;
       await simulateAccountVerification();
     }
@@ -2402,7 +2426,7 @@ async function finishOnboarding() {
   const goalEnabled = document.getElementById('onboard-goal-enabled').checked;
   const goal = parseInt(document.getElementById('onboard-goal').value, 10);
   const payoutAccountHolder = document.getElementById('onboard-payout-holder').value.trim();
-  const payoutAccountIban = document.getElementById('onboard-payout-iban').value.trim();
+  const payoutAccountIban = stripSpaces(document.getElementById('onboard-payout-iban').value);
   const settingsPassword = document.getElementById('onboard-settings-password').value;
   if (!name || (goalEnabled && !goal) || !settingsPassword) return;
 
