@@ -228,6 +228,7 @@
 
     #ring-track { stroke: var(--c-ring-track); }
     #ring-arc { stroke: var(--c-ring-fill); }
+    #ring-arc-preview { stroke: var(--c-ring-fill); opacity: 0; }
 
 
     /* ── PAYMENT ─────────────────────────────── */
@@ -835,6 +836,14 @@
         <path id="ring-track" d="M 43.43 156.57 A 80 80 0 1 1 156.57 156.57"
               fill="none"
               stroke-width="14" stroke-linecap="round"/>
+        <!-- Preview arc: briefly shows the post-tap target level at reduced
+             opacity while the total counts up, before the progress arc
+             animates up to meet it — see animateTapResult(). -->
+        <path id="ring-arc-preview"
+              d="M 43.43 156.57 A 80 80 0 1 1 156.57 156.57"
+              fill="none"
+              stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="377 377" stroke-dashoffset="377"/>
         <!-- Progress arc -->
         <path id="ring-arc"
               d="M 43.43 156.57 A 80 80 0 1 1 156.57 156.57"
@@ -1433,9 +1442,16 @@ function setRing(total, goal) {
   document.getElementById('ring-sub').textContent   = `von ${fmtEur(goal)}`;
 }
 
+// Set by doTap() for the duration of the tap-result reveal (see
+// animateTapResult()) so the Firebase listener's near-instant re-render
+// doesn't snap the ring/total to the new value while the payment sheet is
+// still covering the dashboard, or interrupt the animation mid-flight.
+let suppressRingUpdate = false;
+
 // Goalless jars (jar.goalEnabled === false) show the pig + plain total instead
 // of the progress ring — see "Sparziel ja/nein" in CLAUDE.md.
 function setGoalDisplay(jar) {
+  if (suppressRingUpdate) return;
   const hasGoal = jar?.goalEnabled !== false;
   document.getElementById('ring-wrap').classList.toggle('hidden', !hasGoal);
   document.getElementById('dash-nogoal').classList.toggle('hidden', hasGoal);
@@ -1443,6 +1459,66 @@ function setGoalDisplay(jar) {
     setRing(jar?.total || 0, jar?.goal || 150);
   } else {
     document.getElementById('dash-nogoal-total').textContent = fmtEur(jar?.total || 0);
+  }
+}
+
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+// Post-tap dashboard reveal, run once by doTap() after closePaymentSheet():
+// the total counts up old→new in whole-euro steps (fast, capped at 2s), then
+// — only once that finishes — the ring arc catches up from the old level to
+// the new one over a quick fill. The "new" level is visible the whole time
+// as a dim preview arc, per the requested design. Goalless jars just animate
+// the plain total, since there's no ring to fill.
+function animateTapResult(totalBefore, totalAfter, jar) {
+  const hasGoal = jar?.goalEnabled !== false;
+  const goal = jar?.goal || 150;
+  const delta = totalAfter - totalBefore;
+  const totalEl = document.getElementById(hasGoal ? 'ring-total' : 'dash-nogoal-total');
+
+  if (hasGoal) {
+    setRing(totalBefore, goal);
+    const previewEl = document.getElementById('ring-arc-preview');
+    const p = goal > 0 ? Math.min(totalAfter / goal, 1) : 0;
+    previewEl.style.strokeDashoffset = ARC_LEN * (1 - p);
+    previewEl.style.opacity = '0.3';
+  } else {
+    totalEl.textContent = fmtEur(totalBefore);
+  }
+
+  const countDuration = Math.min(2000, Math.max(350, delta * 90));
+  const countStart = performance.now();
+
+  function tickCount(now) {
+    const t = Math.min(1, (now - countStart) / countDuration);
+    totalEl.textContent = fmtEur(Math.round(totalBefore + delta * easeOutCubic(t)));
+    if (t < 1) {
+      requestAnimationFrame(tickCount);
+    } else if (hasGoal) {
+      fillRing();
+    } else {
+      suppressRingUpdate = false;
+    }
+  }
+  requestAnimationFrame(tickCount);
+
+  function fillRing() {
+    const fillDuration = 450;
+    const fillStart = performance.now();
+    function tickFill(now) {
+      const t = Math.min(1, (now - fillStart) / fillDuration);
+      const current = totalBefore + delta * easeOutCubic(t);
+      const p = goal > 0 ? Math.min(current / goal, 1) : 0;
+      document.getElementById('ring-arc').style.strokeDashoffset = ARC_LEN * (1 - p);
+      if (t < 1) {
+        requestAnimationFrame(tickFill);
+      } else {
+        setRing(totalAfter, goal);
+        document.getElementById('ring-arc-preview').style.opacity = '0';
+        suppressRingUpdate = false;
+      }
+    }
+    requestAnimationFrame(tickFill);
   }
 }
 
@@ -1724,6 +1800,9 @@ function showPayCardGate() {
 }
 
 async function doTap() {
+  // Cleared inside animateTapResult() once the full count-up + ring-fill
+  // sequence finishes, not here — see setGoalDisplay().
+  suppressRingUpdate = true;
   const uid = !DEMO_MODE ? await payerReadyPromise : null;
   const hasPaymentMethod = !DEMO_MODE && hasPayerCard() && !!uid;
   const tap = { amount: tapAmount, timestamp: Date.now(), status: hasPaymentMethod ? 'pending' : 'confirmed' };
@@ -1790,6 +1869,7 @@ async function doTap() {
   await new Promise(r => setTimeout(r, 2100));
 
   closePaymentSheet();
+  animateTapResult(totalBefore, totalAfter, jar);
   if (goalJustReached) runGoalReachedCelebration(isOwnerDevice());
 }
 
