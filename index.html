@@ -1666,7 +1666,7 @@ function showPayCardGate() {
 
   if (!payCardElement) {
     const elements = stripe.elements();
-    payCardElement = elements.create('card', { hidePostalCode: true });
+    payCardElement = elements.create('card', { hidePostalCode: true, disableLink: true });
     payCardElement.mount('#pay-card-element');
   }
   const card = payCardElement;
@@ -2601,11 +2601,15 @@ async function saveUserOnboardCard() {
 function initUserOnboarding(onComplete) {
   document.getElementById('user-onboard-name').value = getDisplayName() || '';
   document.getElementById('user-onboard-card-status').textContent = '';
-  showUserOnboardStep(0);
+  // A name is one of two independent conditions that can trigger this flow
+  // (see needsUserOnboarding()) — if it's already set, re-asking for it (e.g.
+  // right after "Kreditkarte vergessen") would just be re-confirming a value
+  // that's already there, so jump straight to the card step instead.
+  showUserOnboardStep(getDisplayName() ? 1 : 0);
 
   if (stripe && !userOnboardCardElement) {
     const elements = stripe.elements();
-    userOnboardCardElement = elements.create('card', { hidePostalCode: true });
+    userOnboardCardElement = elements.create('card', { hidePostalCode: true, disableLink: true });
     userOnboardCardElement.mount('#user-onboard-card-element');
   }
 
