@@ -1377,7 +1377,9 @@ try {
 } catch (e) {}
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
-const fmtEur = n => `${n},00 €`;
+// de-DE (not de-AT, which groups with a space) gives "." for thousands and
+// "," for the decimal comma, e.g. 2000 -> "2.000,00".
+const fmtEur = n => `${Number(n).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 
 function fmtDate(ts) {
   const d = new Date(ts), now = new Date();
