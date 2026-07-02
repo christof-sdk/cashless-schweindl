@@ -11,11 +11,11 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     /* ── COLOR SCHEMES ──────────────────────────
-       Schema 1 (coral/purple) is the default; Schema 2 (navy/gold) is opted into
-       per-jar via html[data-theme="2"], toggled in Einstellungen and persisted
+       Schema 2 (navy/gold) is the default; Schema 1 (coral/purple) is opted into
+       per-jar via html[data-theme="1"], toggled in Einstellungen and persisted
        to jars/{id}.colorScheme so the choice is the same for everyone viewing
        that jar (it's a branding choice, like the jar name, not a per-device pref). */
-    :root, html[data-theme="1"] {
+    html[data-theme="1"] {
       --c-bg-top: #ff6978;
       --c-pay-bg: #ff6978;
       --c-bg-panel: #340068;
@@ -63,7 +63,7 @@
       --c-stat-divider: rgba(52,0,104,0.25);
       --c-card-border: rgba(52,0,104,0.2);
     }
-    html[data-theme="2"] {
+    :root, html[data-theme="2"] {
       --c-bg-top: #1f2041;
       --c-pay-bg: #1f2041;
       --c-bg-panel: #fbffe3;
@@ -1228,7 +1228,7 @@ const DEMO_JAR = {
   name: 'Running Sushi',
   goal: 150,
   total: 75,
-  colorScheme: '1',
+  colorScheme: '2',
   taps: {
     a: { amount: 2, timestamp: Date.now() - 3.6e4,    status: 'pending',   payerName: 'Connie' },
     b: { amount: 1, timestamp: Date.now() - 7.2e6,    status: 'pending',   payerName: 'Christof' },
@@ -1389,9 +1389,9 @@ const screen = m && m[2] === '/pay' ? 'pay' : 'dash';
 // Stored on the jar (jars/{id}.colorScheme), not per-device — it's a branding
 // choice like the jar name, so everyone viewing this jar should see the same one.
 // A per-jarId localStorage cache lets returning visitors get the right scheme on
-// first paint instead of flashing Schema 1 while Firebase data is still loading.
+// first paint instead of flashing Schema 2 while Firebase data is still loading.
 function applyColorScheme(scheme) {
-  const value = scheme === '2' ? '2' : '1';
+  const value = scheme === '1' ? '1' : '2';
   document.documentElement.setAttribute('data-theme', value);
   try { localStorage.setItem(`colorScheme:${jarId}`, value); } catch (e) {}
   document.querySelectorAll('.scheme-option').forEach(btn => {
@@ -2156,7 +2156,7 @@ const DRAWER_PAGES = {
         </div>
       </div>`;
       document.querySelectorAll('.scheme-option').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.scheme === (currentJar?.colorScheme || '1'));
+        btn.classList.toggle('active', btn.dataset.scheme === (currentJar?.colorScheme || '2'));
         btn.onclick = () => withSettingsAuth(() => saveColorScheme(btn.dataset.scheme));
       });
     },
@@ -2346,6 +2346,12 @@ async function saveColorScheme(scheme) {
     DEMO_JAR.colorScheme = scheme;
     currentJar = DEMO_JAR;
   }
+  // Mobile Safari samples the toolbar/status-bar tint from the page's
+  // top-of-viewport color at initial paint and doesn't reliably re-sample
+  // just because data-theme changed live — a full reload re-applies the new
+  // scheme (already cached in localStorage by applyColorScheme() above)
+  // before first paint, same as any other fresh visit.
+  location.reload();
 }
 
 function renderAccountCardStatus() {
