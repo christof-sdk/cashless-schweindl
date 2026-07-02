@@ -8,7 +8,7 @@ Referenzen sind `index.html:Zeile`.
 
 ## 1. Wording / Bezeichnungen
 
-- [x] **1.1 „Sparschwein" vs. „Schweinchen" — zwei Namen für dieselbe Sache.** → Erledigt: auf „Schweinchen" vereinheitlicht (Tagline, Karten-Label, Subpage-Titel + beide `aria-label`s).
+- [x] **1.1 „Sparschwein" vs. „Schweinchen" — zwei Namen für dieselbe Sache.** → Erledigt: auf „Schweinchen" vereinheitlicht (Karten-Label, Subpage-Titel + beide `aria-label`s). Korrektur: nur die Root-Drawer-Tagline heißt bewusst „Sparschweinchen" (statt „Schweinchen"), damit an dieser einen Stelle klar wird, dass es ums Sparen geht.
   Der Root-Drawer nennt es „Sparschwein" (Tagline `1880`, Karten-Label `1888`, Subpage-Titel `1912`), praktisch überall sonst heißt es „Schweinchen" (Reset-Button `1920`/`989`, Passwort-Prompts `1296`/`1298`/`1323`, Celebration-Text `986`, Account-Karte-Desc `2051`, User-Onboarding-Hint `1071`, Reset-Confirm `2288`). Kein erkennbares Muster (z.B. „formell" vs. „umgangssprachlich"), wirkt wie zwei nie abgeglichene Textquellen.
 
 - [x] **1.2 Passwort-Feld: „Einstellungs-Passwort" vs. „Schweinchen-Passwort".** → Erledigt: Drawer-Menüpunkt + Subpage-Titel auf „Einstellungs-Passwort" geändert.
