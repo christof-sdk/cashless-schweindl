@@ -747,6 +747,10 @@
 
     .drawer-form { padding: 4px 20px; }
     .drawer-form .settings-label:first-of-type { margin-top: 0; }
+    /* .drawer-list-item normally supplies its own 20px inset when placed
+       directly in .drawer-body (unpadded) — inside .drawer-form that inset
+       is already there, so the item's own padding would double it up. */
+    .drawer-form .drawer-list-item { padding-left: 0; padding-right: 0; }
 
     .drawer-static-text {
       font-family: 'Lato', sans-serif; font-size: 14px; color: var(--c-strong-text);
