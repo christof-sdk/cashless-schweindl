@@ -1040,7 +1040,7 @@
         </span>
       </label>
       <div class="onboard-goal-wrap" id="onboard-goal-wrap">
-        <input class="settings-input" id="onboard-goal" type="number" min="1" step="1" placeholder="150">
+        <input class="settings-input" id="onboard-goal" type="number" inputmode="numeric" min="1" step="1" placeholder="150">
         <span class="onboard-suffix">€</span>
       </div>
     </div>
@@ -1959,7 +1959,7 @@ const DRAWER_PAGES = {
           </span>
         </label>
         <div class="settings-goal-wrap${enabled ? '' : ' hidden'}" id="settings-goal-wrap">
-          <input class="settings-input" id="settings-goal" type="number" min="1" step="1" placeholder="150" value="${currentJar?.goal || ''}">
+          <input class="settings-input" id="settings-goal" type="number" inputmode="numeric" min="1" step="1" placeholder="150" value="${currentJar?.goal || ''}">
           <span class="settings-suffix">€</span>
         </div>
         <button class="settings-save" id="settings-save-goal">Speichern</button>
@@ -1991,7 +1991,7 @@ const DRAWER_PAGES = {
       c.innerHTML = `<div class="drawer-form">
         <label class="settings-label" for="settings-threshold">Mindestbetrag pro Person</label>
         <div class="settings-goal-wrap">
-          <input class="settings-input" id="settings-threshold" type="number" min="1" step="1" placeholder="15" value="${currentJar?.payoutThreshold || 15}">
+          <input class="settings-input" id="settings-threshold" type="number" inputmode="numeric" min="1" step="1" placeholder="15" value="${currentJar?.payoutThreshold || 15}">
           <span class="settings-suffix">€</span>
         </div>
         <p class="settings-hint">Jede Person wird abgerechnet, sobald ihr eigener offener Betrag diese Summe erreicht — spätestens aber nach 30 Tagen.</p>
