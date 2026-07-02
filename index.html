@@ -518,6 +518,18 @@
       cursor: pointer; text-decoration: underline;
     }
 
+    /* Generic app dialog — replaces confirm()/prompt()/alert(), same bottom-sheet
+       language as the goal-reached celebration above (reuses .celebration-overlay/
+       -sheet/-title/-text). */
+    .settings-save.danger { background: #b35c4a; }
+    .dialog-cancel-btn {
+      display: block; width: 100%; margin-top: 10px;
+      background: none; border: none; color: var(--c-muted); font-weight: 700;
+      font-family: 'Lato', sans-serif; font-size: 15px; padding: 10px;
+      cursor: pointer; text-decoration: underline;
+    }
+    .app-dialog-input-wrap { margin: 4px 0 4px; text-align: left; }
+
     .confetti-layer { position: fixed; inset: 0; z-index: 120; pointer-events: none; overflow: hidden; }
     .confetti-piece {
       position: absolute; bottom: 0; left: 50%; width: 8px; height: 14px; opacity: 0.95;
@@ -1010,6 +1022,18 @@
   </div>
 </div>
 
+<!-- ── APP DIALOG (ersetzt confirm()/prompt()/alert()) ───────────── -->
+<div id="app-dialog-overlay" class="celebration-overlay hidden">
+  <div class="celebration-sheet">
+    <p class="celebration-text" id="app-dialog-message"></p>
+    <div class="app-dialog-input-wrap hidden" id="app-dialog-input-wrap">
+      <input class="settings-input" id="app-dialog-input" type="text">
+    </div>
+    <button class="settings-save" id="app-dialog-confirm-btn"></button>
+    <button class="dialog-cancel-btn hidden" id="app-dialog-cancel-btn"></button>
+  </div>
+</div>
+
 <!-- ── SETTINGS DRAWER ────────────────────────────── -->
 <div id="settings-drawer" class="drawer-overlay hidden">
   <div class="drawer-panel">
@@ -1313,9 +1337,9 @@ async function verifySettingsPassword(password) {
 // ownerUid — wird lazy beim ersten gesperrten Vorgang nachgeholt, statt das
 // erste beste Gerät, das die Seite öffnet, stillschweigend zum Owner zu machen.
 async function claimOwnershipFlow() {
-  const confirmed = confirm('Für dieses Schweinchen ist noch kein Owner-Gerät und kein Einstellungs-Passwort festgelegt. Dieses Gerät jetzt als Owner festlegen und ein Passwort vergeben?');
+  const confirmed = await appConfirm('Für dieses Schweinchen ist noch kein Owner-Gerät und kein Einstellungs-Passwort festgelegt. Dieses Gerät jetzt als Owner festlegen und ein Passwort vergeben?', { confirmText: 'Ja, festlegen' });
   if (!confirmed) return false;
-  const password = prompt('Neues Einstellungs-Passwort für dieses Schweinchen:');
+  const password = await appPrompt('Neues Einstellungs-Passwort für dieses Schweinchen:', { inputType: 'password', inputPlaceholder: 'Passwort', confirmText: 'Speichern' });
   if (!password) return false;
   try {
     await db.ref(`jars/${jarId}`).update({ ownerUid: myUid });
@@ -1324,7 +1348,7 @@ async function claimOwnershipFlow() {
     return true;
   } catch (e) {
     console.error('Owner-Festlegung fehlgeschlagen:', e);
-    alert('Da ist leider etwas schiefgelaufen. Bitte versuch\'s erneut.');
+    await appAlert('Da ist leider etwas schiefgelaufen. Bitte versuch\'s erneut.');
     return false;
   }
 }
@@ -1341,7 +1365,7 @@ async function withSettingsAuth(action) {
     if (claimed) return action();
     return;
   }
-  const password = prompt('Einstellungs-Passwort für dieses Schweinchen eingeben:');
+  const password = await appPrompt('Einstellungs-Passwort für dieses Schweinchen eingeben:', { inputType: 'password', inputPlaceholder: 'Passwort' });
   if (!password) return;
   try {
     const result = await verifySettingsPassword(password);
@@ -1349,10 +1373,10 @@ async function withSettingsAuth(action) {
       settingsUnlocked = true;
       return action();
     }
-    alert('Falsches Passwort.');
+    await appAlert('Falsches Passwort.');
   } catch (e) {
     console.error('Passwort-Prüfung fehlgeschlagen:', e);
-    alert('Da ist leider etwas schiefgelaufen. Bitte versuch\'s erneut.');
+    await appAlert('Da ist leider etwas schiefgelaufen. Bitte versuch\'s erneut.');
   }
 }
 
@@ -1549,7 +1573,7 @@ function renderTxList() {
   el.onclick = (e) => {
     if (!e.target.closest('.tx-item.pending')) return;
     const threshold = currentJar?.payoutThreshold || 15;
-    alert(`Abrechnung ausstehend. Die Abrechnung erfolgt, sobald die Summe der von einer Person eingezahlten Beträge ${fmtEur(threshold)} übersteigt.`);
+    appAlert(`Abrechnung ausstehend. Die Abrechnung erfolgt, sobald die Summe der von einer Person eingezahlten Beträge ${fmtEur(threshold)} übersteigt.`, { confirmText: 'Verstanden' });
   };
 }
 
@@ -1840,6 +1864,63 @@ async function resolveGoalReachedPending() {
     DEMO_JAR.goalReachedPending = false;
   }
 }
+
+// ── APP DIALOG ────────────────────────────────────────────────────────────────
+// Replaces the browser's native confirm()/prompt()/alert() with the same
+// bottom-sheet look as the goal-reached celebration, so destructive/blocking
+// decisions don't suddenly drop into an unstyled OS dialog. All three variants
+// share one overlay+sheet; resolve() only ever fires once per open() call.
+function showAppDialog({ message, confirmText = 'OK', cancelText = null, danger = false, inputType = null, inputPlaceholder = '' }) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('app-dialog-overlay');
+    const messageEl = document.getElementById('app-dialog-message');
+    const inputWrap = document.getElementById('app-dialog-input-wrap');
+    const input = document.getElementById('app-dialog-input');
+    const confirmBtn = document.getElementById('app-dialog-confirm-btn');
+    const cancelBtn = document.getElementById('app-dialog-cancel-btn');
+
+    messageEl.textContent = message;
+    confirmBtn.textContent = confirmText;
+    confirmBtn.classList.toggle('danger', danger);
+    cancelBtn.textContent = cancelText || '';
+    cancelBtn.classList.toggle('hidden', !cancelText);
+    inputWrap.classList.toggle('hidden', !inputType);
+    input.type = inputType || 'text';
+    input.placeholder = inputPlaceholder;
+    input.value = '';
+
+    let settled = false;
+    function close(result) {
+      if (settled) return;
+      settled = true;
+      overlay.classList.remove('show');
+      // Guard against a fast back-to-back dialog (e.g. a prompt immediately
+      // followed by an error alert) — without this check, this stale timeout
+      // would hide the *next* dialog if it opened within the same 300ms.
+      setTimeout(() => { if (!overlay.classList.contains('show')) overlay.classList.add('hidden'); }, 300);
+      confirmBtn.onclick = null;
+      cancelBtn.onclick = null;
+      overlay.onclick = null;
+      input.onkeydown = null;
+      resolve(result);
+    }
+
+    confirmBtn.onclick = () => close(inputType ? (input.value || null) : true);
+    cancelBtn.onclick = () => close(inputType ? null : false);
+    overlay.onclick = (e) => { if (e.target === overlay) close(inputType ? null : false); };
+    input.onkeydown = (e) => { if (e.key === 'Enter') confirmBtn.onclick(); };
+
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+      if (inputType) input.focus();
+    });
+  });
+}
+
+const appConfirm = (message, opts = {}) => showAppDialog({ message, confirmText: 'Ja', cancelText: 'Abbrechen', ...opts });
+const appPrompt  = (message, opts = {}) => showAppDialog({ message, confirmText: 'Bestätigen', cancelText: 'Abbrechen', inputType: opts.inputType || 'text', ...opts });
+const appAlert   = (message, opts = {}) => showAppDialog({ message, confirmText: 'OK', ...opts });
 
 function spawnSparkles(container, centerX, centerY) {
   const group = document.createElement('div');
@@ -2294,8 +2375,8 @@ function goToCardCapture() {
   openPaymentSheet();
 }
 
-function forgetCard() {
-  const confirmed = confirm('Kreditkarte auf diesem Gerät vergessen? Beim nächsten Einzahlen wird erneut nach einer Kreditkarte gefragt.');
+async function forgetCard() {
+  const confirmed = await appConfirm('Kreditkarte auf diesem Gerät vergessen? Beim nächsten Einzahlen wird erneut nach einer Kreditkarte gefragt.', { confirmText: 'Vergessen' });
   if (!confirmed) return;
   forgetPayerCard();
   renderAccountCardStatus();
@@ -2364,7 +2445,7 @@ async function maybeAutoCharge(jarSnapshot) {
 }
 
 async function resetJar() {
-  const confirmed = confirm('Möchtest du das Schweinchen wirklich zurücksetzen? Alle Einzahlungen und Einstellungen werden gelöscht und das Onboarding startet neu.');
+  const confirmed = await appConfirm('Möchtest du das Schweinchen wirklich zurücksetzen? Alle Einzahlungen und Einstellungen werden gelöscht und das Onboarding startet neu.', { confirmText: 'Zurücksetzen', danger: true });
   if (!confirmed || DEMO_MODE) { closeDrawer(); return; }
 
   const snap = await db.ref(`jars/${jarId}`).once('value');
