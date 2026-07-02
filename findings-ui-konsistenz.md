@@ -89,13 +89,13 @@ Referenzen sind `index.html:Zeile`.
 
 ## 4. Beschreibungstexte
 
-- [ ] **4.1 Redundante Testphase-Hinweise.**
+- [x] **4.1 Redundante Testphase-Hinweise.** → So belassen: Badge (Liste) und Satz (Detailseite) bedienen unterschiedliche Kontexte, keine echte Redundanz; beide fallen ohnehin weg, sobald der Farbmodus fix wird (CLAUDE.md TODO).
   „Farbmodus"-Menüpunkt hat sowohl das „Test"-Badge (`1919`) als auch einen expliziten `desc`-Satz „Nur für die Testphase sichtbar — später wird der Farbmodus fix vorgegeben." (`2006`). Nicht falsch, aber doppelt kommuniziert — keine große Sache, nur der Vollständigkeit halber erwähnt.
 
-- [ ] **4.2 Leicht sperrige Formulierung.**
+- [x] **4.2 Leicht sperrige Formulierung.** → Erledigt: gekürzt auf „Name und Sparziel dieses Schweinchens." — unklarer „auf dem Dashboard"-Zusatz entfernt.
   `1932`: „Name und Sparziel dieses Schweinchens auf dem Dashboard." — grammatisch unklar, ob sich „auf dem Dashboard" auf „Sparziel" oder auf die ganze Aussage bezieht. Kandidat für eine Politur, kein strukturelles Problem.
 
-- [ ] **4.3 Root-Drawer erwähnt „Hilfe & Kontakt" als fertigen Menüpunkt (`1898`, `2067`–`2071`), CLAUDE.md führt „Kontakt" aber noch als offenes TODO.**
+- [x] **4.3 Root-Drawer erwähnt „Hilfe & Kontakt" als fertigen Menüpunkt (`1898`, `2067`–`2071`), CLAUDE.md führt „Kontakt" aber noch als offenes TODO.** → Erledigt: CLAUDE.md-TODO präzisiert — stellt jetzt klar, dass das offene „Kontakt"-TODO ein *Datenfeld* im Schwein-Bereich meint (Owner-Kontaktinfo), nicht den bereits vorhandenen „Hilfe & Kontakt"-Menüpunkt (App-Support). Placeholder-Content-TODO um „Hilfe & Kontakt" ergänzt (fehlte dort bisher, obwohl auch nur Platzhaltertext).
   Kein UI-Text-Problem im engeren Sinn, aber falls das relevant ist: die Doku ist hier hinter dem Code zurück — nur als Fußnote, damit es nicht doppelt gebaut wird.
 
 ---
