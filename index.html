@@ -590,6 +590,10 @@
     }
     .settings-charge:active { transform: scale(0.97); }
     .settings-charge:disabled { opacity: 0.5; cursor: default; }
+    /* Filled/primary variant — same shape, used where the action is the
+       main thing on screen (e.g. the payment sheet's card gate) rather
+       than a secondary action inside a settings page. */
+    .settings-charge--primary { color: var(--c-sheet-btn-text); background: var(--c-sheet-btn-bg); border: none; }
 
     .pay-card-gate {
       width: min(320px, 84%);
@@ -600,7 +604,6 @@
       font-family: 'Lato', sans-serif; font-weight: 700; font-size: 19px;
       color: var(--c-pay-heading); margin-bottom: 18px; line-height: 1.3;
     }
-    .pay-card-gate .settings-charge { color: var(--c-sheet-btn-text); background: var(--c-sheet-btn-bg); border: none; }
     .pay-card-gate .settings-hint { color: var(--c-pay-heading); }
 
     /* ── ONBOARDING ─────────────────────────────── */
@@ -914,7 +917,7 @@
   <div id="pay-card-gate" class="pay-card-gate hidden">
     <p class="pay-card-gate-title">Bevor du einzahlst:<br>Kreditkarte hinterlegen</p>
     <div class="settings-card-element" id="pay-card-element"></div>
-    <button class="settings-charge" id="pay-save-card" type="button">Kreditkarte speichern & weiter</button>
+    <button class="settings-charge settings-charge--primary" id="pay-save-card" type="button">Kreditkarte speichern & weiter</button>
     <p class="settings-hint" id="pay-card-status"></p>
   </div>
 

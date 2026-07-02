@@ -79,7 +79,7 @@ Referenzen sind `index.html:Zeile`.
 - [ ] **3.3 Eingabefelder/Card-Elemente sind hartkodiert Weiß statt themed.** → So belassen: bewusstes Kontrastmuster für Formularfelder, Unterschied zu `--c-sheet-bg` ist minimal.
   `.settings-input` (`443`), `.scheme-option` (`545`), `.settings-card-element` (`581`), `.card-display` (`560`) nutzen alle `background: #fff` bzw. `background: var(--... )` fehlt. In Schema 1 kaum sichtbar (Sheet-Bg ist `#fffcf9`, fast identisch), aber es ist inkonsistent, dass diese Flächen nicht über ein Token laufen wie der Rest.
 
-- [ ] **3.4 Gleiche CSS-Klasse `.settings-charge`, zwei visuelle Stile.**
+- [x] **3.4 Gleiche CSS-Klasse `.settings-charge`, zwei visuelle Stile.** → Erledigt: neue Modifier-Klasse `.settings-charge--primary` für den gefüllten Stil eingeführt, im Payment-Card-Gate-Button ergänzt; die kontextuelle `.pay-card-gate .settings-charge`-Override-Regel entfernt. Beide Varianten visuell geprüft.
   Auf der Account-Karte-Seite ist `.settings-charge` ein Outline-Button (Rahmen `var(--c-strong-text)`, transparenter Hintergrund, `585`–`592`). Im Payment-Card-Gate wird dieselbe Klasse per Override zu einem gefüllten Primär-Button (`603`: Hintergrund `var(--c-sheet-bg-text)`/`--c-sheet-btn-bg`). Gleiche Komponente, zwei Bedeutungsebenen (sekundär vs. primär) ohne eigenen Klassennamen dafür — auf Dauer verwirrend beim Weiterbauen, und der Nutzer sieht „dieselbe" Kartenaktion in zwei Stilen.
 
 - [ ] **3.5 Konfetti-Farbpalette ist in Schema 1 kaum bunt.**
