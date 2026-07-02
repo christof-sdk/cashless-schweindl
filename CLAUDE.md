@@ -148,6 +148,11 @@ Figma's `114:351` revision shifted weights on the dash-top text — picked up he
 - **⚠️ Same applies to `jars/{id}.goalEnabled`** (see Onboarding & Reset) — needs the same manual Console re-publish, or toggling "Sparziel festlegen" will optimistically flip in the UI and then silently revert.
 - **⚠️ Same applies to `jars/{id}.goalReachedPending`** (see Onboarding & Reset → Goal-reached celebration) — needs the same manual Console re-publish, or the celebration sheet will re-appear on every subsequent tap instead of firing once.
 
+## Form Input Conventions
+
+- **Any input that only accepts digits must trigger the device's native number pad** — set both `type="number"` and `inputmode="numeric"` on it (not just one or the other). `type="number"` alone still shows a wider keyboard with a decimal/minus key on some iOS versions; adding `inputmode="numeric"` forces the plain digit-only pad, which is what all of this app's numeric fields actually need (whole positive euro amounts). Applies today to `onboard-goal`, `settings-goal`, and `settings-threshold` in `index.html` — carry the same pair of attributes to any new numeric-only input.
+- **IBAN inputs always get purely-visual 4-character grouping** (`AT32 1234 5678 9987 2345`) — never a plain unformatted text field. Implemented via `formatIban()`/`wireIbanInput()`/`stripSpaces()` in `index.html`: `wireIbanInput()` reformats on every `input` event (typing and pasting both fire it) while preserving caret position, and every read site (`savePayoutAccount()`, `finishOnboarding()`, the onboarding step validation) runs the field's value through `stripSpaces()` first. The grouping spaces must never reach Firebase or any validation check — they exist only in the input's displayed value.
+
 ## Asset Conventions
 
 - Icons/illustrations: inline SVG, always — see parent repo's `CLAUDE.md` for the general rule (strip Figma background rects / page-context wrappers, keep only the meaningful path).
