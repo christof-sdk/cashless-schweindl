@@ -174,8 +174,8 @@
       font-size: 14px; font-weight: 400; color: var(--c-stat-label); text-align: center;
     }
     .dash-stat-divider {
-      border: none; border-top: 1.5px solid var(--c-stat-divider);
-      width: 28px; margin: 0;
+      width: 28px; height: 1.5px;
+      background: var(--c-stat-divider);
     }
 
     .wave { display: block; width: 100%; flex-shrink: 0; }
@@ -877,17 +877,17 @@
     <div class="dash-stats">
       <div class="dash-stat">
         <span class="dash-stat-value" id="stat-deposits">00</span>
-        <hr class="dash-stat-divider">
+        <div class="dash-stat-divider"></div>
         <span class="dash-stat-label">Einzahlungen</span>
       </div>
       <div class="dash-stat">
         <span class="dash-stat-value" id="stat-streak">00</span>
-        <hr class="dash-stat-divider">
+        <div class="dash-stat-divider"></div>
         <span class="dash-stat-label">Tages-Streak</span>
       </div>
       <div class="dash-stat">
         <span class="dash-stat-value" id="stat-payers">00</span>
-        <hr class="dash-stat-divider">
+        <div class="dash-stat-divider"></div>
         <span class="dash-stat-label">Sparer:innen</span>
       </div>
     </div>
