@@ -63,6 +63,54 @@
       --c-stat-divider: rgba(52,0,104,0.25);
       --c-card-border: rgba(52,0,104,0.2);
     }
+    html[data-theme="3"] {
+      --c-bg-top: #1C3A5E;
+      --c-pay-bg: #1C3A5E;
+      --c-bg-panel: #EEF3E3;
+      --c-pill-border: #1C3A5E;
+      --c-icon: #EEF3E3;
+      --c-panel-text: #1C3A5E;
+      --c-panel-secondary: #4a5e47;
+      --c-panel-text-muted: rgba(28,58,94,0.45);
+      --c-panel-text-muted-2: rgba(28,58,94,0.7);
+      --c-panel-btn-bg: #AECD45;
+      --c-panel-btn-text: #1C3A5E;
+      --c-panel-btn-border: #1C3A5E;
+      --c-jar-name: #AECD45;
+      --c-ring-track: rgba(255,255,255,0.18);
+      --c-ring-fill: #AECD45;
+      --c-ring-total: #ffffff;
+      --c-ring-sub: #EEF3E3;
+      --c-pay-heading: #EEF3E3;
+      --c-amount-card-bg: transparent;
+      --c-amount-card-border: transparent;
+      --c-amount-card-text: #EEF3E3;
+      --c-ctrl-bg: #AECD45;
+      --c-ctrl-fg: #1C3A5E;
+      --c-pill-bg: #EEF3E3;
+      --c-chevron: #1C3A5E;
+      --c-thumb-ring: #AECD45;
+      --c-thumb-fill: #2d5a8e;
+      --c-thumb-fill-success: #1C3A5E;
+      --c-thumb-divider: #EEF3E3;
+      --c-thumb-glyph: #EEF3E3;
+      --c-thumb-check: #EEF3E3;
+      --c-flash: #1C3A5E;
+      --c-sheet-bg: #EEF3E3;
+      --c-strong-text: #1C3A5E;
+      --c-muted: rgba(28,58,94,0.6);
+      --c-sheet-btn-bg: #AECD45;
+      --c-sheet-btn-text: #1C3A5E;
+      --c-sheet-btn-border: #AECD45;
+      --c-badge-ok-bg: #AECD45;
+      --c-badge-ok-fg: #1C3A5E;
+      --c-badge-alert-bg: #EEF3E3;
+      --c-badge-alert-fg: #1C3A5E;
+      --c-active-dot: #AECD45;
+      --c-stat-label: rgba(235,239,230,0.65);
+      --c-stat-divider: rgba(235,239,230,0.3);
+      --c-card-border: rgba(28,58,94,0.2);
+    }
     :root, html[data-theme="2"] {
       --c-bg-top: #1f2041;
       --c-pay-bg: #1f2041;
@@ -1408,7 +1456,7 @@ const screen = m && m[2] === '/pay' ? 'pay' : 'dash';
 // A per-jarId localStorage cache lets returning visitors get the right scheme on
 // first paint instead of flashing Schema 2 while Firebase data is still loading.
 function applyColorScheme(scheme) {
-  const value = scheme === '1' ? '1' : '2';
+  const value = ['1','2','3'].includes(scheme) ? scheme : '2';
   document.documentElement.setAttribute('data-theme', value);
   try { localStorage.setItem(`colorScheme:${jarId}`, value); } catch (e) {}
   document.querySelectorAll('.scheme-option').forEach(btn => {
@@ -2245,6 +2293,7 @@ const DRAWER_PAGES = {
         <div class="scheme-toggle">
           <button type="button" class="scheme-option" id="scheme-option-1" data-scheme="1">Schema 1</button>
           <button type="button" class="scheme-option" id="scheme-option-2" data-scheme="2">Schema 2</button>
+          <button type="button" class="scheme-option" id="scheme-option-3" data-scheme="3">Schema 3</button>
         </div>
       </div>`;
       document.querySelectorAll('.scheme-option').forEach(btn => {
