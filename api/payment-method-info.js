@@ -13,6 +13,12 @@ module.exports = async (req, res) => {
 
   const { uid } = req.query || {};
   if (!uid) return res.status(400).json({ error: 'uid fehlt' });
+  // Validate uid format to prevent path traversal — Firebase Anonymous Auth uids are
+  // 20–40 alphanumeric chars; anything else (slashes, dots) must be rejected before
+  // the uid is interpolated into the privileged Firebase path.
+  if (!/^[a-zA-Z0-9]{20,40}$/.test(uid)) {
+    return res.status(400).json({ error: 'Ungültige uid' });
+  }
 
   try {
     const profile = await getPayerProfile(uid);

@@ -17,12 +17,18 @@ function readRawBody(req) {
 // Manual implementation of Stripe's webhook signature scheme (HMAC-SHA256 over
 // "{timestamp}.{rawBody}") — avoids pulling in the stripe npm package for this one
 // check, consistent with the rest of api/ calling the Stripe REST API directly.
+const WEBHOOK_TOLERANCE_SECONDS = 300;
+
 function isValidSignature(rawBody, signatureHeader, secret) {
   if (!signatureHeader) return false;
   const parts = Object.fromEntries(
     signatureHeader.split(',').map((part) => part.split('='))
   );
   if (!parts.t || !parts.v1) return false;
+
+  // Reject webhooks older than 5 minutes to prevent replay attacks.
+  const timestamp = parseInt(parts.t, 10);
+  if (Math.abs(Date.now() / 1000 - timestamp) > WEBHOOK_TOLERANCE_SECONDS) return false;
 
   const expected = crypto
     .createHmac('sha256', secret)

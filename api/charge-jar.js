@@ -30,6 +30,11 @@ module.exports = async (req, res) => {
 
   const { jarId, force } = req.body || {};
   if (!jarId) return res.status(400).json({ error: 'jarId fehlt' });
+  // Validate jarId to prevent path traversal — charge-jar uses patchJar which writes
+  // with the public Firebase client (no secret), but defense in depth here is cheap.
+  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(jarId)) {
+    return res.status(400).json({ error: 'Ungültige jarId' });
+  }
 
   try {
     const jar = await getJar(jarId);

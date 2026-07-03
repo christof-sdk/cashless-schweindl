@@ -19,6 +19,11 @@ module.exports = async (req, res) => {
 
   const { jarId, password } = req.body || {};
   if (!jarId || !password) return res.status(400).json({ error: 'jarId oder password fehlt' });
+  // Validate jarId to prevent path traversal into other Firebase nodes via the
+  // privileged (database-secret) read below.
+  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(jarId)) {
+    return res.status(400).json({ error: 'Ungültige jarId' });
+  }
 
   try {
     const allowed = await checkRateLimit('verifySettingsPassword', clientIp(req), {
