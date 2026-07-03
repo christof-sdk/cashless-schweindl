@@ -145,23 +145,23 @@
 
     .dash-nogoal {
       display: flex; flex-direction: column; align-items: center;
-      margin: 4px 0 0; flex-shrink: 0;
+      margin: 20px 0 0; flex-shrink: 0;
     }
     .dash-pig-img { width: min(30vw, 120px); height: auto; }
     .dash-nogoal-total {
       font-size: clamp(20px, 8vw, 32px); font-weight: 700; color: var(--c-ring-total);
-      margin-top: 8px;
+      margin-top: 14px;
     }
 
     .dash-jar-name {
       font-size: clamp(22px, 7.5vw, 34px); font-weight: 300; color: var(--c-jar-name);
-      text-align: center; padding: 2px 16px 14px;
+      text-align: center; padding: 2px 16px 22px;
     }
 
     .dash-stats {
       display: flex; gap: 16px;
       width: min(320px, 100%);
-      padding-bottom: 18px;
+      padding-bottom: 24px;
     }
     .dash-stat {
       flex: 1; min-width: 0;
@@ -169,9 +169,6 @@
     }
     .dash-stat-value {
       font-size: 28px; font-weight: 700; color: var(--c-jar-name);
-    }
-    .dash-stat-divider {
-      width: 35px; height: 1px; background: var(--c-stat-divider); border: none;
     }
     .dash-stat-label {
       font-size: 14px; font-weight: 400; color: var(--c-stat-label); text-align: center;
@@ -879,17 +876,14 @@
     <div class="dash-stats">
       <div class="dash-stat">
         <span class="dash-stat-value" id="stat-deposits">00</span>
-        <hr class="dash-stat-divider">
         <span class="dash-stat-label">Einzahlungen</span>
       </div>
       <div class="dash-stat">
         <span class="dash-stat-value" id="stat-streak">00</span>
-        <hr class="dash-stat-divider">
         <span class="dash-stat-label">Tages-Streak</span>
       </div>
       <div class="dash-stat">
         <span class="dash-stat-value" id="stat-payers">00</span>
-        <hr class="dash-stat-divider">
         <span class="dash-stat-label">Sparer:innen</span>
       </div>
     </div>
