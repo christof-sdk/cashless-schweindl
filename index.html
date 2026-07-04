@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" id="theme-color-meta" content="#fffcf9">
   <meta name="robots" content="noindex, nofollow">
   <title>Cashless Schweindl</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1315,9 +1316,22 @@
     return;
   }
   sessionStorage.setItem('splashShown', '1');
+  // Force html background + theme-color to match splash so iOS Safari safe area stays consistent
+  var html = document.documentElement;
+  var themeMeta = document.getElementById('theme-color-meta');
+  html.style.background = '#fffcf9';
+  if (themeMeta) themeMeta.content = '#fffcf9';
   setTimeout(function() {
     splash.classList.add('hiding');
-    setTimeout(function() { splash.remove(); }, 380);
+    setTimeout(function() {
+      splash.remove();
+      html.style.background = '';
+      // Update theme-color to actual schema bg-top so safe area matches dashboard
+      if (themeMeta) {
+        var bgTop = getComputedStyle(html).getPropertyValue('--c-bg-top').trim();
+        if (bgTop) themeMeta.content = bgTop;
+      }
+    }, 380);
   }, 2500);
 })();
 
@@ -1572,6 +1586,14 @@ function applyColorScheme(scheme) {
   document.querySelectorAll('.scheme-option').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.scheme === value);
   });
+  // Keep theme-color in sync so iOS Safari safe area matches the dashboard top
+  if (!document.getElementById('splash-screen')) {
+    const themeMeta = document.getElementById('theme-color-meta');
+    if (themeMeta) {
+      const bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim();
+      if (bgTop) themeMeta.content = bgTop;
+    }
+  }
 }
 try {
   const cachedScheme = localStorage.getItem(`colorScheme:${jarId}`);
