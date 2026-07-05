@@ -1858,7 +1858,7 @@ function renderTxList() {
   el.onclick = (e) => {
     if (!e.target.closest('.tx-item.pending')) return;
     const threshold = currentJar?.payoutThreshold || 15;
-    appAlert(`Abrechnung ausstehend. Die Abrechnung erfolgt, sobald die Summe der von einer Person eingezahlten Beträge ${fmtEur(threshold)} übersteigt.`, { confirmText: 'Verstanden' });
+    appAlert(`Einzahlung erfasst: Die Abrechnung erfolgt, sobald die Summe der von einer Person eingezahlten Beträge ${fmtEur(threshold)} übersteigt.`, { confirmText: 'Verstanden' });
   };
 }
 
