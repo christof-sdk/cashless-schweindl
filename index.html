@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" id="theme-color-meta" content="#fffcf9">
+  <meta name="theme-color" id="theme-color-meta" content="#1f2041">
   <meta name="robots" content="noindex, nofollow">
   <title>Cashless Schweindl</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -915,13 +915,18 @@
     /* ── SPLASH SCREEN ──────────────────────────────── */
     #splash-screen {
       position: fixed; inset: 0; z-index: 100;
-      background: #fffcf9;
-      display: flex; flex-direction: column; justify-content: flex-end;
-      padding: 0 24px clamp(100px, 22vh, 200px);
+      display: flex; flex-direction: column;
       transition: opacity 0.35s ease;
     }
     #splash-screen.hiding { opacity: 0; pointer-events: none; }
-    #splash-content { display: flex; flex-direction: column; gap: 24px; }
+    #splash-top { background: var(--c-bg-top); flex-shrink: 0; height: 33%; }
+    #splash-bottom { background: #fffcf9; flex: 1; }
+    #splash-content {
+      position: absolute;
+      bottom: clamp(60px, 20vh, 200px);
+      left: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 24px;
+    }
     #splash-logo { position: relative; width: 180px; height: 73px; }
     #splash-wordmark { position: absolute; top: 0.8px; left: 0.8px; width: 179.2px; height: 71.3px; }
     #splash-pig { position: absolute; top: 0; left: 0; width: 72.9px; height: 72.7px; }
@@ -932,6 +937,11 @@
 
 <!-- ── SPLASH SCREEN ─────────────────────────────── -->
 <div id="splash-screen">
+  <div id="splash-top"></div>
+  <svg viewBox="0 0 402 40" preserveAspectRatio="none" height="40" style="display:block;width:100%;flex-shrink:0;background:var(--c-bg-top)">
+    <path d="M0,40 Q201,0 402,40 L402,40 L0,40 Z" fill="#fffcf9"/>
+  </svg>
+  <div id="splash-bottom"></div>
   <div id="splash-content">
     <div id="splash-logo">
       <svg id="splash-wordmark" viewBox="0 0 179.204 71.2832" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
@@ -1316,19 +1326,16 @@
     return;
   }
   sessionStorage.setItem('splashShown', '1');
-  // Do NOT touch html.style.background — leave it dark (from CSS --c-bg-top) throughout.
-  // The splash is just a fixed overlay; the html background (= safe area color on iOS) stays dark.
+  // Splash top third is --c-bg-top, matching the dashboard/payment screen top.
+  // Set theme-color to that same value so the PWA status bar matches from the start.
   var themeMeta = document.getElementById('theme-color-meta');
-  if (themeMeta) themeMeta.content = '#fffcf9'; // standalone PWA: status bar cream during splash
+  if (themeMeta) {
+    var bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim() || '#1f2041';
+    themeMeta.content = bgTop;
+  }
   setTimeout(function() {
     splash.classList.add('hiding');
-    setTimeout(function() {
-      splash.remove();
-      if (themeMeta) {
-        var bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim() || '#1f2041';
-        themeMeta.content = bgTop;
-      }
-    }, 380);
+    setTimeout(function() { splash.remove(); }, 380);
   }, 2500);
 })();
 
