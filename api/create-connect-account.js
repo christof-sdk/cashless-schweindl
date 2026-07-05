@@ -49,6 +49,10 @@ module.exports = async (req, res) => {
           losses: { payments: 'stripe' },
           stripe_dashboard: { type: 'none' },
         },
+        // This account only ever needs to receive payouts (charge-jar.js still
+        // charges the platform account for now, see CLAUDE.md's Per-Owner Payouts
+        // section) — `transfers` is the capability that lets Stripe pay out to it.
+        capabilities: { transfers: { requested: true } },
         metadata: { jarId },
       });
     }
