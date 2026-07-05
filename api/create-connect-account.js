@@ -42,7 +42,11 @@ module.exports = async (req, res) => {
         business_type: ACCOUNT_BUSINESS_TYPE,
         controller: {
           fees: { payer: 'application' },
-          losses: { payments: 'application' },
+          // Stripe (not the platform) must bear loss/chargeback liability whenever
+          // stripe_dashboard.type is 'none' and Stripe collects requirements via its
+          // own embedded onboarding component — confirmed via a live 400 from Stripe
+          // ("Stripe must be liable for negative balances or refunds and chargebacks").
+          losses: { payments: 'stripe' },
           stripe_dashboard: { type: 'none' },
         },
         metadata: { jarId },
