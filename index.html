@@ -1316,22 +1316,18 @@
     return;
   }
   sessionStorage.setItem('splashShown', '1');
-  // Force html background + theme-color to match splash so iOS Safari safe area stays consistent
-  var html = document.documentElement;
+  // Do NOT touch html.style.background — leave it dark (from CSS --c-bg-top) throughout.
+  // The splash is just a fixed overlay; the html background (= safe area color on iOS) stays dark.
   var themeMeta = document.getElementById('theme-color-meta');
-  html.style.background = '#fffcf9';
-  if (themeMeta) themeMeta.content = '#fffcf9';
+  if (themeMeta) themeMeta.content = '#fffcf9'; // standalone PWA: status bar cream during splash
   setTimeout(function() {
     splash.classList.add('hiding');
     setTimeout(function() {
       splash.remove();
-      // Resolve the actual color (not a CSS variable) so iOS Safari can read it
-      var bgTop = getComputedStyle(html).getPropertyValue('--c-bg-top').trim() || '#1f2041';
-      html.style.background = bgTop;
-      if (themeMeta) themeMeta.content = bgTop;
-      // Viewport-meta trick: toggling content forces iOS Safari to repaint the safe area
-      var vp = document.querySelector('meta[name="viewport"]');
-      if (vp) { var vc = vp.content; vp.content = ''; vp.content = vc; }
+      if (themeMeta) {
+        var bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim() || '#1f2041';
+        themeMeta.content = bgTop;
+      }
     }, 380);
   }, 2500);
 })();
@@ -1587,14 +1583,11 @@ function applyColorScheme(scheme) {
   document.querySelectorAll('.scheme-option').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.scheme === value);
   });
-  // Keep html background + theme-color in sync so iOS Safari safe area matches dashboard top
+  // Keep theme-color in sync for standalone PWA mode
   if (!document.getElementById('splash-screen')) {
     const bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim();
-    if (bgTop) {
-      document.documentElement.style.background = bgTop;
-      const themeMeta = document.getElementById('theme-color-meta');
-      if (themeMeta) themeMeta.content = bgTop;
-    }
+    const themeMeta = document.getElementById('theme-color-meta');
+    if (bgTop && themeMeta) themeMeta.content = bgTop;
   }
 }
 try {
