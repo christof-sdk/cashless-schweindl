@@ -916,11 +916,11 @@
     #splash-screen {
       position: fixed; inset: 0; z-index: 100;
       display: flex; flex-direction: column;
+      background: #fffcf9;
       transition: opacity 0.35s ease;
     }
     #splash-screen.hiding { opacity: 0; pointer-events: none; }
     #splash-top { background: var(--c-bg-top); flex-shrink: 0; height: 33%; display: flex; flex-direction: column; justify-content: flex-end; }
-    #splash-bottom { background: #fffcf9; flex: 1; }
     #splash-content {
       position: absolute;
       bottom: clamp(60px, 20vh, 200px);
@@ -942,7 +942,6 @@
       <path d="M0,40 Q201,0 402,40 L402,40 L0,40 Z" fill="#fffcf9"/>
     </svg>
   </div>
-  <div id="splash-bottom"></div>
   <div id="splash-content">
     <div id="splash-logo">
       <svg id="splash-wordmark" viewBox="0 0 179.204 71.2832" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
