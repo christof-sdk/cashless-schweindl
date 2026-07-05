@@ -1325,12 +1325,13 @@
     splash.classList.add('hiding');
     setTimeout(function() {
       splash.remove();
-      html.style.background = '';
-      // Update theme-color to actual schema bg-top so safe area matches dashboard
-      if (themeMeta) {
-        var bgTop = getComputedStyle(html).getPropertyValue('--c-bg-top').trim();
-        if (bgTop) themeMeta.content = bgTop;
-      }
+      // Resolve the actual color (not a CSS variable) so iOS Safari can read it
+      var bgTop = getComputedStyle(html).getPropertyValue('--c-bg-top').trim() || '#1f2041';
+      html.style.background = bgTop;
+      if (themeMeta) themeMeta.content = bgTop;
+      // Viewport-meta trick: toggling content forces iOS Safari to repaint the safe area
+      var vp = document.querySelector('meta[name="viewport"]');
+      if (vp) { var vc = vp.content; vp.content = ''; vp.content = vc; }
     }, 380);
   }, 2500);
 })();
@@ -1586,12 +1587,13 @@ function applyColorScheme(scheme) {
   document.querySelectorAll('.scheme-option').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.scheme === value);
   });
-  // Keep theme-color in sync so iOS Safari safe area matches the dashboard top
+  // Keep html background + theme-color in sync so iOS Safari safe area matches dashboard top
   if (!document.getElementById('splash-screen')) {
-    const themeMeta = document.getElementById('theme-color-meta');
-    if (themeMeta) {
-      const bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim();
-      if (bgTop) themeMeta.content = bgTop;
+    const bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim();
+    if (bgTop) {
+      document.documentElement.style.background = bgTop;
+      const themeMeta = document.getElementById('theme-color-meta');
+      if (themeMeta) themeMeta.content = bgTop;
     }
   }
 }
