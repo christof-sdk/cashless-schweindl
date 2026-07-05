@@ -14,6 +14,7 @@
         "onboarded": { ".validate": "newData.isBoolean()" },
         "payoutAccountHolder": { ".validate": "newData.isString() && newData.val().length <= 100" },
         "payoutAccountIban": { ".validate": "newData.isString() && newData.val().length <= 50" },
+        "stripeConnectAccountId": { ".validate": "newData.isString() && newData.val().matches(/^acct_[A-Za-z0-9]+$/)" },
         "payoutThreshold": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1000" },
         "colorScheme": { ".validate": "newData.isString() && (newData.val() == '1' || newData.val() == '2' || newData.val() == '3' || newData.val() == '4')" },
         "goalEnabled": { ".validate": "newData.isBoolean()" },

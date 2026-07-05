@@ -1231,8 +1231,7 @@
 </svg></div>
       <h2 class="onboard-title">Auszahlungs-Konto<br>verknüpfen</h2>
       <p class="onboard-hint">Hierher wird das gesammelte Geld ausgezahlt. Identität und Kontoinhaberschaft werden automatisch geprüft.</p>
-      <input class="settings-input" id="onboard-payout-holder" type="text" placeholder="Kontoinhaber:in">
-      <input class="settings-input" id="onboard-payout-iban" type="text" placeholder="IBAN" style="margin-top:10px;">
+      <div class="settings-card-element" id="onboard-payout-connect" style="margin-top:10px; min-height:400px;"></div>
       <p class="onboard-hint" id="onboard-payout-status"></p>
     </div>
 
@@ -1315,6 +1314,9 @@
 
 <!-- Stripe.js -->
 <script src="https://js.stripe.com/v3/"></script>
+
+<!-- Stripe Connect embedded components (payout account onboarding) -->
+<script src="https://connect-js.stripe.com/v1.0/connect.js" async></script>
 
 <script>
 // ── SPLASH ────────────────────────────────────────────────────────────────────
@@ -2384,12 +2386,10 @@ const DRAWER_PAGES = {
     desc: 'Hierher wird das gesammelte Geld ausgezahlt.',
     render(c) {
       c.innerHTML = `<div class="drawer-form">
-        <input class="settings-input" id="settings-payout-holder" type="text" placeholder="Kontoinhaber:in" value="${escapeHtml(currentJar?.payoutAccountHolder || '')}">
-        <input class="settings-input" id="settings-payout-iban" type="text" placeholder="IBAN" value="${escapeHtml(formatIban(currentJar?.payoutAccountIban || ''))}" style="margin-top:10px;">
-        <button class="settings-save" id="settings-save-payout">Speichern</button>
+        <p class="settings-hint" id="payout-status-text">Status wird geladen …</p>
+        <div class="settings-card-element hidden" id="payout-connect-container" style="margin-top:10px; min-height:400px;"></div>
       </div>`;
-      wireIbanInput(document.getElementById('settings-payout-iban'));
-      document.getElementById('settings-save-payout').onclick = () => withSettingsAuth(savePayoutAccount);
+      renderPayoutStatus();
     },
   },
 
@@ -2591,19 +2591,48 @@ async function saveNameAndGoal() {
   showDrawerToast('Gespeichert.');
 }
 
-async function savePayoutAccount() {
-  const payoutAccountHolder = document.getElementById('settings-payout-holder').value.trim();
-  const payoutAccountIban = stripSpaces(document.getElementById('settings-payout-iban').value);
-  if (!payoutAccountHolder || !payoutAccountIban) return;
-  if (!DEMO_MODE) {
-    await db.ref(`jars/${jarId}`).update({ payoutAccountHolder, payoutAccountIban });
-  } else {
-    DEMO_JAR.payoutAccountHolder = payoutAccountHolder;
-    DEMO_JAR.payoutAccountIban = payoutAccountIban;
-    currentJar = DEMO_JAR;
+async function renderPayoutStatus() {
+  const statusEl = document.getElementById('payout-status-text');
+  const accountId = currentJar?.stripeConnectAccountId;
+  if (!accountId) {
+    statusEl.textContent = 'Noch kein Konto verknüpft.';
+    showPayoutConnectResume();
+    return;
   }
-  popDrawerPage();
-  showDrawerToast('Gespeichert.');
+  try {
+    const res = await fetch(`/api/connect-account-status?accountId=${accountId}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    if (data.chargesEnabled && data.payoutsEnabled) {
+      statusEl.textContent = 'Konto verifiziert ✓';
+    } else if (data.detailsSubmitted) {
+      statusEl.textContent = 'Angaben eingereicht — Prüfung durch Stripe läuft.';
+      showPayoutConnectResume();
+    } else {
+      statusEl.textContent = 'Einrichtung noch nicht abgeschlossen.';
+      showPayoutConnectResume();
+    }
+  } catch (e) {
+    statusEl.textContent = 'Status konnte nicht geladen werden.';
+  }
+}
+
+function showPayoutConnectResume() {
+  connectAccountId = currentJar?.stripeConnectAccountId || null;
+  const container = document.getElementById('payout-connect-container');
+  container.classList.remove('hidden');
+  mountConnectOnboarding('payout-connect-container', async () => {
+    if (!currentJar?.stripeConnectAccountId && connectAccountId) {
+      if (!DEMO_MODE) {
+        await db.ref(`jars/${jarId}`).update({ stripeConnectAccountId: connectAccountId });
+      } else {
+        DEMO_JAR.stripeConnectAccountId = connectAccountId;
+        currentJar = DEMO_JAR;
+      }
+    }
+    showDrawerToast('Aktualisiert.');
+    renderPayoutStatus();
+  });
 }
 
 async function saveSettingsPassword() {
@@ -2751,9 +2780,52 @@ async function resetJar() {
   closeDrawer();
 }
 
+// ── STRIPE CONNECT (payout account onboarding, test mode) ─────────────────────
+// Shared by Schwein-Onboarding step 2 and the Settings drawer's Auszahlungs-Konto
+// page — both just call mountConnectOnboarding() into their own container.
+let connectAccountId = null; // set once the jar's Stripe Connect account is known
+let stripeConnectInstance = null; // created once, reused across mounts
+window.StripeConnect = window.StripeConnect || {};
+let connectJsReadyResolve;
+const connectJsReadyPromise = new Promise((r) => { connectJsReadyResolve = r; });
+StripeConnect.onLoad = () => connectJsReadyResolve();
+
+async function fetchConnectClientSecret() {
+  const res = await fetch('/api/create-connect-account', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accountId: connectAccountId || undefined, jarId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Connect-Setup fehlgeschlagen');
+  connectAccountId = data.accountId; // captured on first (create) call, reused after
+  return data.clientSecret;
+}
+
+// Lazily mounts Stripe's embedded onboarding UI into containerId. Nothing calls
+// this — and therefore nothing creates a Stripe account or hits the API — until
+// the step/page that actually needs it is opened.
+async function mountConnectOnboarding(containerId, onExit) {
+  await connectJsReadyPromise;
+  if (!stripeConnectInstance) {
+    stripeConnectInstance = StripeConnect.init({
+      publishableKey: STRIPE_PUBLISHABLE_KEY,
+      fetchClientSecret: fetchConnectClientSecret,
+    });
+  }
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const el = stripeConnectInstance.create('account-onboarding');
+  el.setOnExit(() => { if (onExit) onExit(); });
+  container.appendChild(el);
+}
+
 // ── ONBOARDING ────────────────────────────────────────────────────────────────
 const ONBOARD_STEPS = 4;
 let onboardStep = 0;
+
+let onboardConnectMounted = false; // embedded component mounted at most once per onboarding session
+let onboardConnectStarted = false; // user has been through the embedded flow at least once
 
 function showOnboardStep(i) {
   onboardStep = i;
@@ -2763,20 +2835,20 @@ function showOnboardStep(i) {
   }
   document.getElementById('onboard-back').classList.toggle('hidden', i === 0);
   document.getElementById('onboard-next').textContent = i === ONBOARD_STEPS - 1 ? 'Fertig' : 'Weiter';
-}
-
-// Reines Frontend-Mockup für einen Acceptance-Test — simuliert, wie sich eine
-// echte Kontoverknüpfung (z.B. Stripe Connect Embedded Onboarding) anfühlen würde,
-// ohne irgendeine echte Anbindung. Zeigt nur einen kurzen "wird geprüft"-Zustand.
-async function simulateAccountVerification() {
-  const status = document.getElementById('onboard-payout-status');
-  const nextBtn = document.getElementById('onboard-next');
-  nextBtn.disabled = true;
-  status.textContent = 'Konto wird geprüft …';
-  await new Promise(r => setTimeout(r, 900));
-  status.textContent = 'Konto verifiziert ✓';
-  await new Promise(r => setTimeout(r, 400));
-  nextBtn.disabled = false;
+  if (i === 2 && !onboardConnectMounted) {
+    onboardConnectMounted = true;
+    const nextBtn = document.getElementById('onboard-next');
+    const status = document.getElementById('onboard-payout-status');
+    nextBtn.disabled = true;
+    status.textContent = 'Wird geladen …';
+    mountConnectOnboarding('onboard-payout-connect', () => {
+      onboardConnectStarted = true;
+      nextBtn.disabled = false;
+      status.textContent = 'Angaben werden von Stripe geprüft.';
+    }).catch(() => {
+      status.textContent = 'Da ist leider etwas schiefgelaufen.';
+    });
+  }
 }
 
 function initOnboarding() {
@@ -2784,11 +2856,11 @@ function initOnboarding() {
   document.getElementById('onboard-goal-enabled').checked = true;
   document.getElementById('onboard-goal-wrap').classList.remove('hidden');
   document.getElementById('onboard-goal').value = '';
-  document.getElementById('onboard-payout-holder').value = '';
-  document.getElementById('onboard-payout-iban').value = '';
   document.getElementById('onboard-payout-status').textContent = '';
   document.getElementById('onboard-settings-password').value = '';
-  wireIbanInput(document.getElementById('onboard-payout-iban'));
+  connectAccountId = null;
+  onboardConnectMounted = false;
+  onboardConnectStarted = false;
   showOnboardStep(0);
   document.getElementById('onboard-goal-enabled').onchange = (e) => {
     document.getElementById('onboard-goal-wrap').classList.toggle('hidden', !e.target.checked);
@@ -2800,12 +2872,7 @@ function initOnboarding() {
     if (onboardStep === 0 && !document.getElementById('onboard-name').value.trim()) return;
     if (onboardStep === 1 && document.getElementById('onboard-goal-enabled').checked
         && !parseInt(document.getElementById('onboard-goal').value, 10)) return;
-    if (onboardStep === 2) {
-      const holder = document.getElementById('onboard-payout-holder').value.trim();
-      const iban = stripSpaces(document.getElementById('onboard-payout-iban').value);
-      if (!holder || !iban) return;
-      await simulateAccountVerification();
-    }
+    if (onboardStep === 2 && !onboardConnectStarted) return;
     if (onboardStep === 3 && !document.getElementById('onboard-settings-password').value) return;
     if (onboardStep < ONBOARD_STEPS - 1) {
       showOnboardStep(onboardStep + 1);
@@ -2819,17 +2886,15 @@ async function finishOnboarding() {
   const name = document.getElementById('onboard-name').value.trim();
   const goalEnabled = document.getElementById('onboard-goal-enabled').checked;
   const goal = parseInt(document.getElementById('onboard-goal').value, 10);
-  const payoutAccountHolder = document.getElementById('onboard-payout-holder').value.trim();
-  const payoutAccountIban = stripSpaces(document.getElementById('onboard-payout-iban').value);
   const settingsPassword = document.getElementById('onboard-settings-password').value;
   if (!name || (goalEnabled && !goal) || !settingsPassword) return;
 
   const uid = await payerReadyPromise;
   const jarData = {
-    onboarded: true, name, total: 0, ownerUid: uid,
-    payoutAccountHolder, payoutAccountIban, goalEnabled,
+    onboarded: true, name, total: 0, ownerUid: uid, goalEnabled,
   };
   if (goal) jarData.goal = goal;
+  if (connectAccountId) jarData.stripeConnectAccountId = connectAccountId;
   await db.ref(`jars/${jarId}`).set(jarData);
   if (uid) await setSettingsPassword(settingsPassword);
 }
