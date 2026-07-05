@@ -11,11 +11,34 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── SHARED TOKENS (theme-independent) ──────
+       Used by "white card" style components (inputs, the Farbmodus/card display
+       chips, Stripe Elements boxes) and subtle dividers/washes across all 4
+       schemes. Identical to the literal values these components used to hardcode
+       — defining them here changes nothing visually until a dark-mode override
+       (see html[data-theme="2"][data-mode="dark"] below) points them elsewhere. */
+    :root {
+      --c-card-bg: #fff;
+      --c-input-border: rgba(0,0,0,0.15);
+      --c-card-wash: rgba(0,0,0,0.035);
+      --c-card-wash-active: rgba(0,0,0,0.07);
+      --c-divider: rgba(0,0,0,0.08);
+      --c-divider-strong: rgba(0,0,0,0.1);
+      --c-hover-wash: rgba(0,0,0,0.04);
+      --c-dot-inactive: rgba(0,0,0,0.15);
+    }
+
     /* ── COLOR SCHEMES ──────────────────────────
        Schema 2 (navy/gold) is the default; Schema 1 (coral/purple) is opted into
        per-jar via html[data-theme="1"], toggled in Einstellungen and persisted
        to jars/{id}.colorScheme so the choice is the same for everyone viewing
-       that jar (it's a branding choice, like the jar name, not a per-device pref). */
+       that jar (it's a branding choice, like the jar name, not a per-device pref).
+
+       Each scheme can additionally have a light/dark VARIANT, chosen automatically
+       per-device from prefers-color-scheme (see applyColorModeFromSystem() in the
+       script below) — independent of the jar-level scheme choice above. Only
+       Schema 2 has a dark variant so far (html[data-theme="2"][data-mode="dark"]),
+       as a first pass to review before rolling the same pattern out to 1/3/4. */
     html[data-theme="1"] {
       --c-bg-top: #ff6978;
       --c-pay-bg: #ff6978;
@@ -211,6 +234,32 @@
       --c-stat-divider: rgba(255,252,249,0.3);
       --c-card-border: rgba(31,32,65,0.2);
       --c-pig-fill: #fbffe3;
+    }
+
+    /* Schema 2, dark variant — chosen per-device (see applyColorModeFromSystem()),
+       first pass: only overrides tokens for surfaces that are actually light in
+       the base scheme above (dash-top/pay-bg and the components that live on top
+       of them, e.g. the swipe-to-pay pill, ring text, stat labels, are already
+       dark-on-dark and stay untouched here on purpose). */
+    html:not([data-theme])[data-mode="dark"], html[data-theme="2"][data-mode="dark"] {
+      --c-bg-panel: #181933;
+      --c-panel-text: #f5f5f7;
+      --c-panel-secondary: #9a9aa5;
+      --c-panel-text-muted: rgba(255,255,255,0.45);
+      --c-panel-text-muted-2: rgba(255,255,255,0.7);
+      --c-sheet-bg: #181933;
+      --c-strong-text: #f5f5f7;
+      --c-muted: rgba(255,252,249,0.6);
+      --c-active-dot: #f2c94c;
+      --c-dot-inactive: rgba(255,255,255,0.18);
+      --c-card-border: rgba(255,255,255,0.2);
+      --c-card-bg: #22234a;
+      --c-input-border: rgba(255,255,255,0.15);
+      --c-card-wash: rgba(255,255,255,0.05);
+      --c-card-wash-active: rgba(255,255,255,0.09);
+      --c-divider: rgba(255,255,255,0.1);
+      --c-divider-strong: rgba(255,255,255,0.12);
+      --c-hover-wash: rgba(255,255,255,0.06);
     }
 
     html, body { height: 100%; overflow: hidden; font-family: 'Lato', sans-serif; background: var(--c-bg-top); }
@@ -546,8 +595,8 @@
       width: 100%; box-sizing: border-box;
       font-family: 'Lato', sans-serif; font-size: 17px;
       padding: 12px 14px; border-radius: 12px;
-      border: 1px solid rgba(0,0,0,0.15);
-      background: #fff; color: var(--c-strong-text);
+      border: 1px solid var(--c-input-border);
+      background: var(--c-card-bg); color: var(--c-strong-text);
     }
 
     .settings-goal-wrap { position: relative; }
@@ -660,8 +709,8 @@
       flex: 1; text-align: center;
       font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 700;
       padding: 10px 8px; border-radius: 12px;
-      border: 1px solid rgba(0,0,0,0.15);
-      background: #fff; color: var(--c-muted);
+      border: 1px solid var(--c-input-border);
+      background: var(--c-card-bg); color: var(--c-muted);
       cursor: pointer;
     }
     .scheme-option.active {
@@ -676,7 +725,7 @@
 
     .card-display {
       display: flex; align-items: center; gap: 12px;
-      background: #fff; border: 1px solid rgba(0,0,0,0.15);
+      background: var(--c-card-bg); border: 1px solid var(--c-input-border);
       border-radius: 12px; padding: 14px 16px; margin-top: 4px;
     }
     .card-brand-badge {
@@ -697,7 +746,7 @@
     }
 
     .settings-card-element {
-      background: #fff; border: 1px solid rgba(0,0,0,0.15);
+      background: var(--c-card-bg); border: 1px solid var(--c-input-border);
       border-radius: 12px; padding: 14px;
     }
 
@@ -738,7 +787,7 @@
     }
     .onboard-dot {
       width: 8px; height: 8px; border-radius: 50%;
-      background: rgba(0,0,0,0.15);
+      background: var(--c-dot-inactive);
     }
     .onboard-dot.active { background: var(--c-active-dot); }
 
@@ -817,7 +866,7 @@
     .drawer-header {
       display: flex; align-items: center; gap: 4px;
       padding: 16px 10px 14px 16px; flex-shrink: 0;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
+      border-bottom: 1px solid var(--c-divider-strong);
     }
     .drawer-header.no-border { border-bottom-color: transparent; }
     .drawer-back {
@@ -850,9 +899,9 @@
       width: 100%; background: none; border: none; cursor: pointer;
       padding: 14px 20px; font-family: 'Lato', sans-serif; font-size: 16px;
       color: var(--c-strong-text); text-align: left;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
+      border-bottom: 1px solid var(--c-divider);
     }
-    .drawer-list-item:active { background: rgba(0,0,0,0.04); }
+    .drawer-list-item:active { background: var(--c-hover-wash); }
     .drawer-list-item .chevron { width: 14px; height: 14px; color: var(--c-muted); flex-shrink: 0; }
     .drawer-list-item-label { display: flex; align-items: center; gap: 8px; }
 
@@ -864,7 +913,7 @@
 
     .drawer-list-item.danger {
       color: #b35c4a; font-weight: 700; margin-top: 14px;
-      border-top: 1px solid rgba(0,0,0,0.08); border-bottom: none;
+      border-top: 1px solid var(--c-divider); border-bottom: none;
     }
 
     .drawer-form { padding: 4px 20px; }
@@ -891,10 +940,10 @@
     .drawer-cards-row { display: flex; gap: 16px; padding: 0 16px; }
     .drawer-card {
       flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 8px; background: rgba(0,0,0,0.035); border: 1px solid var(--c-card-border); border-radius: 8px;
+      gap: 8px; background: var(--c-card-wash); border: 1px solid var(--c-card-border); border-radius: 8px;
       padding: 14px 20px; cursor: pointer;
     }
-    .drawer-card:active { background: rgba(0,0,0,0.07); }
+    .drawer-card:active { background: var(--c-card-wash-active); }
     .drawer-card-icon { width: 48px; height: 48px; color: var(--c-strong-text); }
     .drawer-card-icon svg { display: block; width: 100%; height: 100%; }
     .drawer-card-label { font-family: 'Lato', sans-serif; font-size: 16px; color: var(--c-strong-text); text-align: center; line-height: 1.3; }
@@ -1615,6 +1664,18 @@ try {
   const cachedScheme = localStorage.getItem(`colorScheme:${jarId}`);
   if (cachedScheme) document.documentElement.setAttribute('data-theme', cachedScheme);
 } catch (e) {}
+
+// ── DARK MODE (device setting, independent of the jar's colorScheme above) ────
+// Unlike colorScheme (a per-jar branding choice), light/dark is a per-device
+// preference — read straight from prefers-color-scheme, never stored anywhere.
+// Live-updates via the change listener so iOS's scheduled light/dark switch
+// (e.g. at sunset) is picked up immediately without a reload.
+const colorModeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+function applyColorModeFromSystem() {
+  document.documentElement.setAttribute('data-mode', colorModeMedia.matches ? 'dark' : 'light');
+}
+applyColorModeFromSystem();
+colorModeMedia.addEventListener('change', applyColorModeFromSystem);
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 // de-DE (not de-AT, which groups with a space) gives "." for thousands and
