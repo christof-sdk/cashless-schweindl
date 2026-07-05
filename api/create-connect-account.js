@@ -51,8 +51,9 @@ module.exports = async (req, res) => {
         },
         // This account only ever needs to receive payouts (charge-jar.js still
         // charges the platform account for now, see CLAUDE.md's Per-Owner Payouts
-        // section) — `transfers` is the capability that lets Stripe pay out to it.
-        capabilities: { transfers: { requested: true } },
+        // section) — transfers is what actually matters, but Stripe requires
+        // card_payments requested too for an individual AT account (live-tested).
+        capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
         metadata: { jarId },
       });
     }
