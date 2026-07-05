@@ -1231,7 +1231,9 @@
 </svg></div>
       <h2 class="onboard-title">Auszahlungs-Konto<br>verknüpfen</h2>
       <p class="onboard-hint">Hierher wird das gesammelte Geld ausgezahlt. Identität und Kontoinhaberschaft werden automatisch geprüft.</p>
-      <div class="settings-card-element" id="onboard-payout-connect" style="margin-top:10px; min-height:400px;"></div>
+      <div class="settings-card-element hidden" id="onboard-payout-connect" style="margin-top:10px; min-height:400px;"></div>
+      <input class="settings-input hidden" id="onboard-payout-holder" type="text" placeholder="Kontoinhaber:in">
+      <input class="settings-input hidden" id="onboard-payout-iban" type="text" placeholder="IBAN" style="margin-top:10px;">
       <p class="onboard-hint" id="onboard-payout-status"></p>
     </div>
 
@@ -2385,6 +2387,16 @@ const DRAWER_PAGES = {
     title: 'Auszahlungs-Konto',
     desc: 'Hierher wird das gesammelte Geld ausgezahlt.',
     render(c) {
+      if (!USE_REAL_CONNECT_ONBOARDING) {
+        c.innerHTML = `<div class="drawer-form">
+          <input class="settings-input" id="settings-payout-holder" type="text" placeholder="Kontoinhaber:in" value="${escapeHtml(currentJar?.payoutAccountHolder || '')}">
+          <input class="settings-input" id="settings-payout-iban" type="text" placeholder="IBAN" value="${escapeHtml(formatIban(currentJar?.payoutAccountIban || ''))}" style="margin-top:10px;">
+          <button class="settings-save" id="settings-save-payout">Speichern</button>
+        </div>`;
+        wireIbanInput(document.getElementById('settings-payout-iban'));
+        document.getElementById('settings-save-payout').onclick = () => withSettingsAuth(savePayoutAccount);
+        return;
+      }
       c.innerHTML = `<div class="drawer-form">
         <p class="settings-hint" id="payout-status-text">Status wird geladen …</p>
         <div class="settings-card-element hidden" id="payout-connect-container" style="margin-top:10px; min-height:400px;"></div>
@@ -2591,6 +2603,23 @@ async function saveNameAndGoal() {
   showDrawerToast('Gespeichert.');
 }
 
+// Restores the pre-Connect mockup save path — only used while
+// USE_REAL_CONNECT_ONBOARDING is false (see the STRIPE CONNECT section above).
+async function savePayoutAccount() {
+  const payoutAccountHolder = document.getElementById('settings-payout-holder').value.trim();
+  const payoutAccountIban = stripSpaces(document.getElementById('settings-payout-iban').value);
+  if (!payoutAccountHolder || !payoutAccountIban) return;
+  if (!DEMO_MODE) {
+    await db.ref(`jars/${jarId}`).update({ payoutAccountHolder, payoutAccountIban });
+  } else {
+    DEMO_JAR.payoutAccountHolder = payoutAccountHolder;
+    DEMO_JAR.payoutAccountIban = payoutAccountIban;
+    currentJar = DEMO_JAR;
+  }
+  popDrawerPage();
+  showDrawerToast('Gespeichert.');
+}
+
 async function renderPayoutStatus() {
   const statusEl = document.getElementById('payout-status-text');
   const accountId = currentJar?.stripeConnectAccountId;
@@ -2781,6 +2810,12 @@ async function resetJar() {
 }
 
 // ── STRIPE CONNECT (payout account onboarding, test mode) ─────────────────────
+// The real integration below is fully built and "parked" behind this flag while
+// it's still too fiddly (real Stripe test-mode identity/IBAN fixtures) for quick
+// UX acceptance testing. Flip to true before go-live — nothing else needs to
+// change, both the real and the old simulated mockup paths stay maintained here.
+const USE_REAL_CONNECT_ONBOARDING = false;
+
 // Shared by Schwein-Onboarding step 2 and the Settings drawer's Auszahlungs-Konto
 // page — both just call mountConnectOnboarding() into their own container.
 let connectAccountId = null; // set once the jar's Stripe Connect account is known
@@ -2835,7 +2870,7 @@ function showOnboardStep(i) {
   }
   document.getElementById('onboard-back').classList.toggle('hidden', i === 0);
   document.getElementById('onboard-next').textContent = i === ONBOARD_STEPS - 1 ? 'Fertig' : 'Weiter';
-  if (i === 2 && !onboardConnectMounted) {
+  if (i === 2 && USE_REAL_CONNECT_ONBOARDING && !onboardConnectMounted) {
     onboardConnectMounted = true;
     const nextBtn = document.getElementById('onboard-next');
     const status = document.getElementById('onboard-payout-status');
@@ -2851,6 +2886,20 @@ function showOnboardStep(i) {
   }
 }
 
+// Reines Frontend-Mockup für einen Acceptance-Test — simuliert, wie sich eine
+// echte Kontoverknüpfung anfühlen würde, ohne irgendeine echte Anbindung. Nur
+// aktiv, solange USE_REAL_CONNECT_ONBOARDING false ist (siehe oben).
+async function simulateAccountVerification() {
+  const status = document.getElementById('onboard-payout-status');
+  const nextBtn = document.getElementById('onboard-next');
+  nextBtn.disabled = true;
+  status.textContent = 'Konto wird geprüft …';
+  await new Promise(r => setTimeout(r, 900));
+  status.textContent = 'Konto verifiziert ✓';
+  await new Promise(r => setTimeout(r, 400));
+  nextBtn.disabled = false;
+}
+
 function initOnboarding() {
   document.getElementById('onboard-name').value = '';
   document.getElementById('onboard-goal-enabled').checked = true;
@@ -2861,6 +2910,14 @@ function initOnboarding() {
   connectAccountId = null;
   onboardConnectMounted = false;
   onboardConnectStarted = false;
+  document.getElementById('onboard-payout-connect').classList.toggle('hidden', !USE_REAL_CONNECT_ONBOARDING);
+  document.getElementById('onboard-payout-holder').classList.toggle('hidden', USE_REAL_CONNECT_ONBOARDING);
+  document.getElementById('onboard-payout-iban').classList.toggle('hidden', USE_REAL_CONNECT_ONBOARDING);
+  if (!USE_REAL_CONNECT_ONBOARDING) {
+    document.getElementById('onboard-payout-holder').value = '';
+    document.getElementById('onboard-payout-iban').value = '';
+    wireIbanInput(document.getElementById('onboard-payout-iban'));
+  }
   showOnboardStep(0);
   document.getElementById('onboard-goal-enabled').onchange = (e) => {
     document.getElementById('onboard-goal-wrap').classList.toggle('hidden', !e.target.checked);
@@ -2872,7 +2929,16 @@ function initOnboarding() {
     if (onboardStep === 0 && !document.getElementById('onboard-name').value.trim()) return;
     if (onboardStep === 1 && document.getElementById('onboard-goal-enabled').checked
         && !parseInt(document.getElementById('onboard-goal').value, 10)) return;
-    if (onboardStep === 2 && !onboardConnectStarted) return;
+    if (onboardStep === 2) {
+      if (USE_REAL_CONNECT_ONBOARDING) {
+        if (!onboardConnectStarted) return;
+      } else {
+        const holder = document.getElementById('onboard-payout-holder').value.trim();
+        const iban = stripSpaces(document.getElementById('onboard-payout-iban').value);
+        if (!holder || !iban) return;
+        await simulateAccountVerification();
+      }
+    }
     if (onboardStep === 3 && !document.getElementById('onboard-settings-password').value) return;
     if (onboardStep < ONBOARD_STEPS - 1) {
       showOnboardStep(onboardStep + 1);
@@ -2894,7 +2960,12 @@ async function finishOnboarding() {
     onboarded: true, name, total: 0, ownerUid: uid, goalEnabled,
   };
   if (goal) jarData.goal = goal;
-  if (connectAccountId) jarData.stripeConnectAccountId = connectAccountId;
+  if (USE_REAL_CONNECT_ONBOARDING) {
+    if (connectAccountId) jarData.stripeConnectAccountId = connectAccountId;
+  } else {
+    jarData.payoutAccountHolder = document.getElementById('onboard-payout-holder').value.trim();
+    jarData.payoutAccountIban = stripSpaces(document.getElementById('onboard-payout-iban').value);
+  }
   await db.ref(`jars/${jarId}`).set(jarData);
   if (uid) await setSettingsPassword(settingsPassword);
 }
