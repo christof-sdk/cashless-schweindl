@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <script>
-    // Must run before #splash-screen is even parsed — deciding this later (after
-    // the Firebase/Stripe <script src> tags below, which block parsing while they
-    // download) let the browser paint the splash for one or more frames on every
-    // reload within an already-running session, a brief but visible flash.
-    if (sessionStorage.getItem('splashShown')) document.documentElement.classList.add('no-splash');
-  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" id="theme-color-meta" content="#1f2041">
@@ -1078,40 +1071,44 @@
     }
     .drawer-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── SPLASH SCREEN ──────────────────────────────── */
-    #splash-screen {
-      position: fixed; inset: 0; z-index: 100;
+    /* ── WELCOME SCREEN ──────────────────────────────── */
+    /* Shown only when onboarding is actually needed (Schwein and/or User) — replaces
+       the old time-based splash. Sits above the other .screen elements (z-index 50 vs
+       their 1) so the target onboarding screen can already be revealed underneath while
+       this fades out on top, mirroring how the old splash revealed the dashboard. */
+    #s-welcome {
+      position: fixed; inset: 0; z-index: 50;
       display: flex; flex-direction: column;
       background: var(--c-sheet-bg);
       transition: opacity 0.35s ease;
     }
-    #splash-screen.hiding { opacity: 0; pointer-events: none; }
-    html.no-splash #splash-screen { display: none; }
-    #splash-top { background: var(--c-bg-top); flex-shrink: 0; height: 33%; display: flex; flex-direction: column; justify-content: flex-end; }
-    #splash-content {
+    #s-welcome.hiding { opacity: 0; pointer-events: none; }
+    #welcome-top { background: var(--c-bg-top); flex-shrink: 0; height: 33%; display: flex; flex-direction: column; justify-content: flex-end; }
+    #welcome-content {
       position: absolute;
       bottom: clamp(60px, 20vh, 200px);
       left: 24px; right: 24px;
       display: flex; flex-direction: column; gap: 24px;
     }
-    #splash-logo { position: relative; width: 180px; height: 73px; }
-    #splash-wordmark { position: absolute; top: 0.8px; left: 0.8px; width: 179.2px; height: 71.3px; color: var(--c-logo-text); }
-    #splash-pig { position: absolute; top: 0; left: 0; width: 72.9px; height: 72.7px; }
-    #splash-tagline { font-family: 'Lato', sans-serif; font-weight: 400; font-size: 24px; line-height: 1.35; color: var(--c-muted); margin: 0; }
+    #welcome-logo { position: relative; width: 180px; height: 73px; }
+    #welcome-wordmark { position: absolute; top: 0.8px; left: 0.8px; width: 179.2px; height: 71.3px; color: var(--c-logo-text); }
+    #welcome-pig { position: absolute; top: 0; left: 0; width: 72.9px; height: 72.7px; }
+    #welcome-tagline { font-family: 'Lato', sans-serif; font-weight: 400; font-size: 24px; line-height: 1.35; color: var(--c-muted); margin: 0; }
+    #welcome-cta { margin-top: 8px; }
   </style>
 </head>
 <body>
 
-<!-- ── SPLASH SCREEN ─────────────────────────────── -->
-<div id="splash-screen">
-  <div id="splash-top">
+<!-- ── WELCOME SCREEN (nur wenn Onboarding nötig ist) ─────────────── -->
+<div id="s-welcome" class="hidden">
+  <div id="welcome-top">
     <svg viewBox="0 0 402 40" preserveAspectRatio="none" height="40" style="display:block;width:100%;flex-shrink:0">
       <path d="M0,40 Q201,0 402,40 L402,40 L0,40 Z" fill="var(--c-sheet-bg)"/>
     </svg>
   </div>
-  <div id="splash-content">
-    <div id="splash-logo">
-      <svg id="splash-wordmark" viewBox="0 0 179.204 71.2832" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+  <div id="welcome-content">
+    <div id="welcome-logo">
+      <svg id="welcome-wordmark" viewBox="0 0 179.204 71.2832" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
         <g clip-path="url(#sw-clip)">
           <path d="M35.7714 0.126012C35.976 0.0803737 36.9284 0.0748311 37.1855 0.0801412C46.9317 0.281438 55.0538 3.80113 61.8452 10.7103C68.0919 17.1776 71.5765 25.8203 71.5617 34.8099C71.4363 47.0996 65.0072 58.3337 54.7301 65.0339C49.6125 68.3704 41.9637 71.1646 35.8278 71.1003C35.7095 71.1263 35.5902 71.1471 35.4701 71.1624C34.7804 71.2503 32.0582 71.0149 31.2822 70.925C24.9216 70.1878 19.2261 67.9155 14.1426 63.9886C6.56969 58.0637 1.63132 49.3999 0.393496 39.8671C-0.69607 31.3398 1.48506 22.7405 6.66395 15.7972C7.37081 14.8495 8.2013 14.0595 8.97479 13.1735C10.2165 11.7475 11.5094 10.3047 12.9221 9.04611C18.5645 4.01892 25.8515 0.998061 33.3529 0.261225C34.1532 0.182613 34.9573 0.229168 35.7714 0.126012ZM37.2101 69.4897C43.8831 69.099 48.608 67.731 54.2726 64.1696C70.202 54.1546 75.4578 31.2518 64.4721 15.7077C57.5485 5.91131 47.0104 1.63336 35.2678 1.70039C25.64 2.58037 17.5084 5.96024 10.7198 13.0091C9.27536 14.5089 8.31085 16.1673 7.24497 17.9425C3.34197 24.2797 1.5558 32.0139 2.2544 39.4204C3.03834 48.111 7.25453 56.1311 13.9701 61.7062C20.8792 67.4153 28.3795 69.5682 37.2101 69.4897Z" fill="black"/>
           <path d="M21.0361 21.5422C21.5672 21.4307 22.6282 21.5231 23.1315 21.7088C30.1247 24.2889 29.8053 40.4481 22.5081 41.9682C18.1169 42.2051 16.1644 37.219 15.5308 33.6215C14.8326 29.6568 16.2317 22.1933 21.0361 21.5422ZM22.6252 41.1461C24.3042 40.6315 25.3516 39.6087 26.2239 37.9809C28.5639 33.6138 28.222 25.4955 23.6206 22.6391C22.8916 22.1864 21.9734 22.173 21.1325 22.2286C20.4646 22.486 19.7868 22.7366 19.2263 23.2478C14.8496 27.2394 15.2553 37.921 20.6946 40.8698C21.1941 41.1407 22.045 41.2195 22.6252 41.1461Z" fill="black"/>
@@ -1121,7 +1118,7 @@
         </g>
         <defs><clipPath id="sw-clip"><rect width="179.204" height="71.2832" fill="white"/></clipPath></defs>
       </svg>
-      <svg id="splash-pig" viewBox="0 0 72.8761 72.677" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+      <svg id="welcome-pig" viewBox="0 0 72.8761 72.677" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
         <g clip-path="url(#sp-clip)">
           <path d="M32.9681 0.196266C35.821 0.140451 38.6738 0.319981 41.4974 0.733032C42.6934 0.896182 43.7424 1.03773 44.9348 1.27852C48.4391 1.99475 51.8203 3.21939 54.9709 4.91359C57.3131 6.14586 59.2766 7.41785 61.2896 9.15761C66.7144 13.9013 70.4713 20.2629 72.0068 27.3043C72.3936 29.1552 72.6459 31.0315 72.7622 32.9187C72.8156 33.7013 72.7594 34.5561 72.7775 35.3471C72.9793 44.1823 69.4259 53.8727 63.5744 60.4933C58.4276 66.3192 51.5292 70.3175 43.9164 71.8878C42.6855 72.1394 41.0853 72.4078 39.8345 72.4865C39.1506 72.4726 38.4418 72.5772 37.7415 72.5797C35.6033 72.5872 33.559 72.5153 31.4372 72.2021C23.7439 71.0066 16.635 67.3802 11.1505 61.8533C7.19192 57.8881 3.76984 52.1871 1.96637 46.8758C1.23323 44.6859 0.702862 42.4326 0.381944 40.1456C0.067564 37.8282 0.00499234 35.3034 0.170282 32.9685C0.25534 31.6583 0.420766 30.3545 0.66563 29.0646C1.95796 21.8074 5.43678 15.1185 10.636 9.8941C14.8282 5.72766 20.0419 2.67111 25.7802 1.23773C28.1726 0.640143 30.4885 0.188646 32.9681 0.196266Z" fill="black"/>
           <path d="M36.21 3.60889C37.5348 3.53028 39.33 3.60547 40.6498 3.73004C41.8539 3.84361 43.8353 4.16172 45.0252 4.45802C45.8372 4.66021 47.6107 5.38834 48.3651 5.71816C53.5839 7.99389 58.1948 11.465 61.8258 15.8513C62.8738 17.1141 64.3498 19.125 65.1419 20.5946C67.3442 24.6806 68.6825 29.7977 68.8843 34.4252C68.9327 35.8433 68.8846 37.2634 68.7412 38.6749C67.857 47.5588 63.5175 55.7394 56.658 61.4522C51.4997 65.7163 45.0312 68.5159 38.3027 68.701C37.818 68.7145 37.3369 68.7811 36.8505 68.7889C36.4146 68.796 35.9904 68.7494 35.5571 68.7085C35.2898 68.6736 34.8091 68.7035 34.4828 68.6775C33.4923 68.591 32.5052 68.47 31.5231 68.3145C25.8179 67.4226 20.4451 65.0536 15.9384 61.4429C8.73211 55.8416 4.07277 47.5834 3.00376 38.518C2.3593 32.9552 3.14935 27.1366 5.62993 22.1151C10.0065 13.2555 18.2779 7.3678 27.6995 4.86273C29.0621 4.50044 30.4437 4.10254 31.8327 3.84628C32.6338 3.69851 33.6156 3.83774 34.4395 3.70723C35.0105 3.64434 35.6043 3.67858 36.21 3.60889Z" fill="#FF6978"/>
@@ -1131,7 +1128,8 @@
         <defs><clipPath id="sp-clip"><rect width="72.8761" height="72.677" fill="white"/></clipPath></defs>
       </svg>
     </div>
-    <p id="splash-tagline">Das bargeldlose Sparschwein<br>für deine Wohnung.</p>
+    <p id="welcome-tagline">Das bargeldlose Sparschwein<br>für deine Wohnung.</p>
+    <button type="button" class="onboard-next" id="welcome-cta"></button>
   </div>
 </div>
 
@@ -1486,38 +1484,6 @@
 <script src="https://js.stripe.com/v3/"></script>
 
 <script>
-// ── SPLASH ────────────────────────────────────────────────────────────────────
-(function() {
-  var splash = document.getElementById('splash-screen');
-  if (!splash) return;
-  if (sessionStorage.getItem('splashShown')) {
-    splash.remove();
-    return;
-  }
-  sessionStorage.setItem('splashShown', '1');
-  // #splash-top's CSS height:33% almost never lands on a whole device pixel,
-  // so the wave's anti-aliased curve straddles a fractional row and blends a
-  // faint seam between the dark top and the cream area below it. Snapping
-  // the height to the nearest exact device pixel here (before first paint)
-  // removes the fractional boundary entirely — no seam possible.
-  var splashTop = document.getElementById('splash-top');
-  if (splashTop) {
-    var dpr = window.devicePixelRatio || 1;
-    splashTop.style.height = (Math.round(window.innerHeight / 3 * dpr) / dpr) + 'px';
-  }
-  // Splash top third is --c-bg-top, matching the dashboard/payment screen top.
-  // Set theme-color to that same value so the PWA status bar matches from the start.
-  var themeMeta = document.getElementById('theme-color-meta');
-  if (themeMeta) {
-    var bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim() || '#1f2041';
-    themeMeta.content = bgTop;
-  }
-  setTimeout(function() {
-    splash.classList.add('hiding');
-    setTimeout(function() { splash.remove(); }, 380);
-  }, 2500);
-})();
-
 // ── STRIPE CONFIG ─────────────────────────────────────────────────────────────
 const STRIPE_PUBLISHABLE_KEY = 'pk_test_51Tl7zSLHBulYslLUWQsm9alZ5pLtMLd1PmO2bMobHH91mSrUm8o5jk1xRbWHZ3XpNRymaO9OFmZMhY1uJkOdnfLB00IpEIOKbI';
 const stripe = window.Stripe ? Stripe(STRIPE_PUBLISHABLE_KEY) : null;
@@ -1762,6 +1728,12 @@ const screen = m && m[2] === '/pay' ? 'pay' : 'dash';
 // choice like the jar name, so everyone viewing this jar should see the same one.
 // A per-jarId localStorage cache lets returning visitors get the right scheme on
 // first paint instead of flashing Schema 2 while Firebase data is still loading.
+// Keep theme-color (PWA status bar) in sync with the current --c-bg-top token.
+function syncThemeColorMeta() {
+  const bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim();
+  const themeMeta = document.getElementById('theme-color-meta');
+  if (bgTop && themeMeta) themeMeta.content = bgTop;
+}
 function applyColorScheme(scheme) {
   const value = ['1','2','3','4'].includes(scheme) ? scheme : '2';
   document.documentElement.setAttribute('data-theme', value);
@@ -1769,17 +1741,16 @@ function applyColorScheme(scheme) {
   document.querySelectorAll('.scheme-option').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.scheme === value);
   });
-  // Keep theme-color in sync for standalone PWA mode
-  if (!document.getElementById('splash-screen')) {
-    const bgTop = getComputedStyle(document.documentElement).getPropertyValue('--c-bg-top').trim();
-    const themeMeta = document.getElementById('theme-color-meta');
-    if (bgTop && themeMeta) themeMeta.content = bgTop;
-  }
+  syncThemeColorMeta();
 }
 try {
   const cachedScheme = localStorage.getItem(`colorScheme:${jarId}`);
   if (cachedScheme) document.documentElement.setAttribute('data-theme', cachedScheme);
 } catch (e) {}
+// Sync theme-color immediately using the cached (or default) scheme, so there's no
+// flash of the hardcoded fallback color while Firebase data is still loading — this
+// used to be the splash screen's job, but the splash is now conditional (see s-welcome).
+syncThemeColorMeta();
 
 // ── DARK MODE (device setting, independent of the jar's colorScheme above) ────
 // Unlike colorScheme (a per-jar branding choice), light/dark is a per-device
@@ -3383,6 +3354,49 @@ function initUserOnboarding(onComplete) {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+// ── WELCOME SCREEN ────────────────────────────────────────────────────────────
+// Gate shown before onboarding starts — looks like the old splash (same wordmark/
+// pig/tagline) but only appears when this jar and/or device actually need
+// onboarding, with a CTA whose wording depends on which flow is next. When both
+// flows are needed (Schwein then User), it's shown exactly once, before the
+// Schwein flow — sessionStorage remembers that this jar's onboarding has been
+// entered, so a reload mid-flow (or the automatic hand-off into User-Onboarding
+// once Schwein-Onboarding finishes) jumps straight back in without showing it again.
+let onboardingStarted = (() => {
+  try { return sessionStorage.getItem(`onboardingStarted:${jarId}`) === '1'; } catch (e) { return false; }
+})();
+let welcomeWaveSnapped = false;
+let welcomeShownFor = null;
+
+function markOnboardingStarted() {
+  onboardingStarted = true;
+  try { sessionStorage.setItem(`onboardingStarted:${jarId}`, '1'); } catch (e) {}
+}
+
+function showWelcome(kind, onStart) {
+  const welcome = document.getElementById('s-welcome');
+  document.getElementById('welcome-cta').onclick = () => {
+    markOnboardingStarted();
+    onStart();
+    welcome.classList.add('hiding');
+    setTimeout(() => welcome.remove(), 380);
+  };
+  if (welcomeShownFor === kind) return;
+  welcomeShownFor = kind;
+  document.getElementById('welcome-cta').textContent = kind === 'schwein' ? 'Schweinchen einrichten' : 'Benutzer anlegen';
+  if (!welcomeWaveSnapped) {
+    welcomeWaveSnapped = true;
+    // #welcome-top's CSS height:33% almost never lands on a whole device pixel, so
+    // the wave's anti-aliased curve straddles a fractional row and blends a faint
+    // seam between the dark top and the cream area below it. Snapping the height
+    // to the nearest exact device pixel removes the fractional boundary entirely.
+    const welcomeTop = document.getElementById('welcome-top');
+    const dpr = window.devicePixelRatio || 1;
+    welcomeTop.style.height = (Math.round(window.innerHeight / 3 * dpr) / dpr) + 'px';
+  }
+  welcome.classList.remove('hidden');
+}
+
 let dashboardDataPromise;
 let appEnteredPromise;
 
@@ -3438,6 +3452,7 @@ function initDashboard() {
   } else {
     let resolveFirst;
     let appEntered = false;
+    let schweinOnboardingStarted = false;
     let userOnboardingStarted = false;
     dashboardDataPromise = new Promise(resolve => { resolveFirst = resolve; });
 
@@ -3460,13 +3475,33 @@ function initDashboard() {
       }
     };
 
+    const startSchweinOnboarding = () => {
+      if (schweinOnboardingStarted) return;
+      schweinOnboardingStarted = true;
+      document.getElementById('s-dash').classList.add('hidden');
+      document.getElementById('s-user-onboard').classList.add('hidden');
+      document.getElementById('s-onboard').classList.remove('hidden');
+      initOnboarding();
+    };
+
+    const startUserOnboarding = (data) => {
+      if (userOnboardingStarted) return;
+      userOnboardingStarted = true;
+      document.getElementById('s-dash').classList.add('hidden');
+      document.getElementById('s-user-onboard').classList.remove('hidden');
+      initUserOnboarding(() => { appEntered = true; renderApp(data); });
+    };
+
     db.ref(`jars/${jarId}`).on('value', snap => {
       const data = snap.val();
       if (!data || !data.onboarded) {
-        document.getElementById('s-dash').classList.add('hidden');
-        document.getElementById('s-user-onboard').classList.add('hidden');
-        document.getElementById('s-onboard').classList.remove('hidden');
-        initOnboarding();
+        if (!schweinOnboardingStarted) {
+          if (onboardingStarted) {
+            startSchweinOnboarding();
+          } else {
+            showWelcome('schwein', startSchweinOnboarding);
+          }
+        }
         if (resolveFirst) { resolveFirst(data); resolveFirst = null; }
         return;
       }
@@ -3475,11 +3510,12 @@ function initDashboard() {
 
       if (!appEntered) {
         if (needsUserOnboarding()) {
-          document.getElementById('s-dash').classList.add('hidden');
-          document.getElementById('s-user-onboard').classList.remove('hidden');
           if (!userOnboardingStarted) {
-            userOnboardingStarted = true;
-            initUserOnboarding(() => { appEntered = true; renderApp(data); });
+            if (onboardingStarted) {
+              startUserOnboarding(data);
+            } else {
+              showWelcome('user', () => startUserOnboarding(data));
+            }
           }
           if (resolveFirst) { resolveFirst(data); resolveFirst = null; }
           return;
