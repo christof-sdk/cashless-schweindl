@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+  <script>
+    // Must run before #splash-screen is even parsed — deciding this later (after
+    // the Firebase/Stripe <script src> tags below, which block parsing while they
+    // download) let the browser paint the splash for one or more frames on every
+    // reload within an already-running session, a brief but visible flash.
+    if (sessionStorage.getItem('splashShown')) document.documentElement.classList.add('no-splash');
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" id="theme-color-meta" content="#1f2041">
@@ -971,6 +978,7 @@
       transition: opacity 0.35s ease;
     }
     #splash-screen.hiding { opacity: 0; pointer-events: none; }
+    html.no-splash #splash-screen { display: none; }
     #splash-top { background: var(--c-bg-top); flex-shrink: 0; height: 33%; display: flex; flex-direction: column; justify-content: flex-end; }
     #splash-content {
       position: absolute;
