@@ -1017,6 +1017,19 @@
     .drawer-static-text + .drawer-static-text { margin-top: 12px; }
     .drawer-static-text a { color: var(--c-strong-text); }
 
+    .drawer-check-list {
+      list-style: none; margin: 12px 0; padding: 0 20px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .drawer-check-list li {
+      font-family: 'Lato', sans-serif; font-size: 14px; color: var(--c-strong-text);
+      line-height: 1.5; padding-left: 24px; position: relative;
+    }
+    .drawer-check-list li::before {
+      content: '✓'; position: absolute; left: 0; top: 0;
+      color: var(--c-sheet-btn-bg); font-weight: 700;
+    }
+
     /* ── Root overview (Figma node 131:449) ── */
     .drawer-root { display: flex; flex-direction: column; gap: 80px; padding: 16px 0 24px; }
     .drawer-hero { display: flex; flex-direction: column; gap: 24px; padding: 0 16px; }
@@ -2469,7 +2482,7 @@ const DRAWER_PAGES = {
               </div>
             </div>
             <div class="drawer-list-section">
-              ${drawerListItem('drawer-go-about', 'Über die App')}
+              ${drawerListItem('drawer-go-about', 'Das ist Oggy')}
               ${drawerListItem('drawer-go-help', 'Hilfe & Kontakt')}
               ${drawerListItem('drawer-go-impressum', 'Impressum')}
             </div>
@@ -2643,11 +2656,17 @@ const DRAWER_PAGES = {
   },
 
   about: {
-    title: 'Über die App',
+    title: 'Das ist Oggy',
     render(c) {
-      c.innerHTML =
-        '<p class="drawer-static-text">Cashless Schweindl — das digitale Sparschwein.</p>' +
-        '<p class="drawer-static-text">Weitere Informationen folgen.</p>';
+      c.innerHTML = `
+        <p class="drawer-static-text">Das digitale Sparschwein für eure Wohnung.</p>
+        <ul class="drawer-check-list">
+          <li>Kein Bargeld, kein Login – einfach Handy hinhalten und fertig</li>
+          <li>Jeder im Haushalt kann mitmachen, wann immer er vorbeigeht</li>
+          <li>OGGY erinnert euch spielerisch daran, wenn ihr eine Weile nichts eingezahlt habt</li>
+        </ul>
+        <p class="drawer-static-text">OGGY macht gemeinsames Sparen so einfach wie nie. Du richtest ein Sparziel ein – ein Urlaub, ein neues Sofa, was auch immer – und stellst OGGY irgendwo hin, wo ihr täglich vorbeikommt. Der Fortschritt ist direkt am Schweinchen sichtbar, der Rest passiert von selbst. Sparen als kleines Ritual, das sich gut anfühlt.</p>
+      `;
     },
   },
 
