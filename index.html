@@ -1094,7 +1094,10 @@
     #welcome-wordmark { position: absolute; top: 0.8px; left: 0.8px; width: 179.2px; height: 71.3px; color: var(--c-logo-text); }
     #welcome-pig { position: absolute; top: 0; left: 0; width: 72.9px; height: 72.7px; }
     #welcome-tagline { font-family: 'Lato', sans-serif; font-weight: 400; font-size: 24px; line-height: 1.35; color: var(--c-muted); margin: 0; }
-    #welcome-cta { margin-top: 8px; }
+    /* #welcome-content already provides the 24px side inset and the 24px gap
+       between children — .drawer-check-list's own inset/margin (meant for the
+       unpadded .drawer-body it normally lives in) would double both up here. */
+    #welcome-content .drawer-check-list { margin: 0; padding: 0; }
   </style>
 </head>
 <body>
@@ -1129,6 +1132,13 @@
       </svg>
     </div>
     <p id="welcome-tagline">Das bargeldlose Sparschwein<br>für deine Wohnung.</p>
+    <ul class="drawer-check-list">
+      <li>Kein Bargeld, kein Login – einfach Handy hinhalten und fertig</li>
+      <li>Jeder im Haushalt kann mitmachen, wann immer er vorbeigeht</li>
+      <li>OGGY erinnert euch spielerisch daran, wenn ihr eine Weile nichts eingezahlt habt</li>
+    </ul>
+  </div>
+  <div class="onboard-actions">
     <button type="button" class="onboard-next" id="welcome-cta"></button>
   </div>
 </div>
@@ -3505,6 +3515,11 @@ function initDashboard() {
         if (resolveFirst) { resolveFirst(data); resolveFirst = null; }
         return;
       }
+      // Reset once we've left the not-onboarded state, so a later "Schweinchen
+      // zurücksetzen" (jar flips back to onboarded:false within this same page
+      // session) re-triggers the welcome/onboarding flow instead of being
+      // silently swallowed by this now-stale guard.
+      schweinOnboardingStarted = false;
       document.getElementById('s-onboard').classList.add('hidden');
       currentJar = data;
 
