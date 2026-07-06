@@ -693,7 +693,7 @@
       color: var(--c-muted); font-weight: 700;
     }
 
-    /* Toggle switch (e.g. "Sparziel festlegen") */
+    /* Toggle switch (e.g. "Zielbetrag festlegen") */
     .toggle-row {
       display: flex; align-items: center; justify-content: space-between;
       cursor: pointer; margin-bottom: 14px;
@@ -1015,6 +1015,7 @@
       padding: 0 20px; line-height: 1.5;
     }
     .drawer-static-text + .drawer-static-text { margin-top: 12px; }
+    .drawer-static-text a { color: var(--c-strong-text); }
 
     /* ── Root overview (Figma node 131:449) ── */
     .drawer-root { display: flex; flex-direction: column; gap: 80px; padding: 16px 0 24px; }
@@ -1345,9 +1346,9 @@
 <path d="M27.5 21.2502H16.25C15.9185 21.2502 15.6005 21.3819 15.3661 21.6164C15.1317 21.8508 15 22.1687 15 22.5002V50.0002C15 50.3318 15.1317 50.6497 15.3661 50.8841C15.6005 51.1185 15.9185 51.2502 16.25 51.2502H27.5C27.834 51.2723 28.1689 51.2228 28.4822 51.105C28.7956 50.9872 29.0801 50.8038 29.3168 50.5671C29.5535 50.3304 29.7369 50.0458 29.8548 49.7325C29.9726 49.4192 30.0221 49.0843 30 48.7502V23.7502C30.0221 23.4162 29.9726 23.0813 29.8548 22.768C29.7369 22.4547 29.5535 22.1701 29.3168 21.9334C29.0801 21.6967 28.7956 21.5133 28.4822 21.3955C28.1689 21.2777 27.834 21.2281 27.5 21.2502Z" fill="currentColor"/>
 <path d="M87.5996 55.6494C87.7688 55.6517 87.9362 55.6882 88.0908 55.7568C88.2455 55.8256 88.3849 55.9257 88.5 56.0498C95 63.0498 105 76.9495 105 92.4492C105 108.899 87.9003 116.249 70.9004 116.249C55.5004 116.249 37.5 109.999 37.5 92.4492C38.1035 79.9462 42.9539 68.0231 51.25 58.6494C51.4041 58.4779 51.6016 58.3506 51.8213 58.2803C52.0408 58.2101 52.275 58.1989 52.5 58.249C54.1459 58.5812 55.8209 58.7487 57.5 58.749H77.5C79.1295 58.9766 80.7892 58.8543 82.3672 58.3887C83.9451 57.923 85.4056 57.1255 86.6504 56.0498C86.9016 55.7962 87.2426 55.6519 87.5996 55.6494ZM73.835 72.5C71.354 72.5 69.157 73.0969 67.2441 74.29C65.3408 75.4737 63.849 77.1832 62.7695 79.418C62.2562 80.4808 61.8669 81.6458 61.5977 82.9121H58.6504L57.5 86.0225H61.1924C61.1655 86.4943 61.1504 86.9774 61.1504 87.4717C61.1504 87.946 61.1639 88.4098 61.1885 88.8633H58.6504L57.5 92.0459H61.5996C61.8688 93.309 62.2572 94.4692 62.7695 95.5254C63.8491 97.7412 65.3408 99.4413 67.2441 100.625C69.157 101.799 71.354 102.387 73.835 102.387C75.3027 102.387 76.6903 102.173 77.9971 101.747C79.3039 101.311 80.4737 100.668 81.5059 99.8154L79.2041 94.957C78.8537 95.2127 78.4182 95.4929 77.8975 95.7959C77.3863 96.0988 76.7899 96.3594 76.1084 96.5771C75.4266 96.795 74.6683 96.9033 73.835 96.9033C72.5188 96.9033 71.3728 96.5814 70.3975 95.9375C69.4222 95.2841 68.6647 94.2662 68.125 92.8838C68.0243 92.6194 67.9331 92.34 67.8516 92.0459H73.6367L75.1846 88.8633H67.3691C67.3439 88.419 67.3291 87.9552 67.3291 87.4717C67.3291 86.9677 67.3451 86.4846 67.373 86.0225H76.4912L77.8975 82.9121H67.8525C67.9339 82.6186 68.0247 82.3393 68.125 82.0742C68.6647 80.6729 69.4222 79.6404 70.3975 78.9775C71.3728 78.3147 72.5188 77.9834 73.835 77.9834C74.6683 77.9834 75.4266 78.0969 76.1084 78.3242C76.7995 78.542 77.4103 78.8119 77.9404 79.1338C78.4801 79.4462 78.9396 79.7349 79.3184 80L81.5908 75.1416C80.5398 74.2895 79.3656 73.6361 78.0684 73.1816C76.771 72.7271 75.3596 72.5 73.835 72.5Z" fill="currentColor"/>
 </svg></div>
-      <h2 class="onboard-title">Wieviel möchtest du<br>sparen?</h2>
+      <h2 class="onboard-title">Wie viel möchtest du<br>sparen?</h2>
       <label class="toggle-row">
-        <span class="toggle-row-label">Sparziel festlegen</span>
+        <span class="toggle-row-label">Zielbetrag festlegen</span>
         <span class="toggle-switch">
           <input type="checkbox" id="onboard-goal-enabled" checked>
           <span class="toggle-track"><span class="toggle-thumb"></span></span>
@@ -2008,7 +2009,7 @@ function renderTxList() {
   el.onclick = (e) => {
     if (!e.target.closest('.tx-item.pending')) return;
     const threshold = currentJar?.payoutThreshold || 15;
-    appAlert(`Einzahlung erfasst: Die Abrechnung erfolgt, sobald die Summe der von einer Person eingezahlten Beträge ${fmtEur(threshold)} übersteigt.`, { confirmText: 'Verstanden' });
+    appAlert(`Einzahlung erfasst: Die Abrechnung erfolgt, sobald deine Einzahlungen zusammen ${fmtEur(threshold)} übersteigen — spätestens aber nach 30 Tagen.`, { confirmText: 'Verstanden' });
   };
 }
 
@@ -2660,7 +2661,22 @@ const DRAWER_PAGES = {
   impressum: {
     title: 'Impressum',
     render(c) {
-      c.innerHTML = '<p class="drawer-static-text">Impressum folgt.</p>';
+      c.innerHTML = `
+        <p class="drawer-static-text">
+          Christof Autengruber<br>
+          Hollandstraße 7/17<br>
+          1020 Wien<br>
+          Österreich
+        </p>
+        <p class="drawer-static-text">
+          Tel.: <a href="tel:+4367762309855">+43 677 62309855</a><br>
+          E-Mail: <a href="mailto:christof@sidekick-ux.com">christof@sidekick-ux.com</a>
+        </p>
+        <p class="drawer-static-text">UID-Nummer: ATU73382519</p>
+        <p class="drawer-static-text">Behörde gemäß ECG: Magistratisches Bezirksamt des II. Wiener Bezirks</p>
+        <p class="drawer-static-text">Unternehmensgegenstand: Konzeption &amp; Design von User Interfaces</p>
+        <p class="drawer-static-text">Mitglied der <a href="https://www.wko.at/" target="_blank" rel="noopener noreferrer">WKÖ</a></p>
+      `;
     },
   },
 };
@@ -2781,7 +2797,7 @@ async function renderPayoutStatus() {
     if (data.chargesEnabled && data.payoutsEnabled) {
       statusEl.textContent = 'Konto verifiziert ✓';
     } else if (data.detailsSubmitted) {
-      statusEl.textContent = 'Angaben eingereicht — Prüfung durch Stripe läuft.';
+      statusEl.textContent = 'Angaben eingereicht — Prüfung durch Zahlungsdienstleister läuft.';
       showPayoutConnectResume();
     } else {
       statusEl.textContent = 'Einrichtung noch nicht abgeschlossen.';
@@ -2851,12 +2867,12 @@ function renderAccountCardStatus() {
         <span class="card-brand-badge${cardBrand ? ` ${cardBrand.toLowerCase()}` : ''}">${cardBrand ? cardBrand.toUpperCase() : 'KREDITKARTE'}</span>
         <span class="card-number">${cardLast4 ? `XXXX XXXX XXXX ${cardLast4}` : 'XXXX XXXX XXXX XXXX'}</span>
       </div>
-      <p class="settings-hint">Die Kreditkartendaten werden nur lokal auf diesem Gerät gespeichert — die eigentlichen Kreditkartendaten liegen ausschließlich bei Stripe, nie auf unserem Server.</p>
+      <p class="settings-hint">Die Kartennummer sehen wir nie — die kennt nur unser Zahlungsdienstleister. Gespeichert wird hier nur eine Referenz sowie Kartentyp und die letzten vier Ziffern.</p>
       ${drawerListItem('account-forget-card', 'Kreditkarte vergessen', true)}`;
     document.getElementById('account-forget-card').onclick = forgetCard;
   } else {
     holder.innerHTML = `
-      <p class="settings-hint">Keine Kreditkarte hinterlegt. Wird beim nächsten Einzahlen abgefragt.</p>
+      <p class="settings-hint">Du kannst deine Kreditkarte auch später hinterlegen — spätestens bei der ersten Einzahlung wird sie benötigt.</p>
       <button class="settings-charge" id="account-add-card">Kreditkarte hinterlegen</button>`;
     document.getElementById('account-add-card').onclick = goToCardCapture;
   }
@@ -2897,7 +2913,7 @@ async function chargeNow() {
   const btn = document.getElementById('settings-charge-now');
   const status = document.getElementById('charge-status');
   btn.disabled = true;
-  status.textContent = 'Rechne ab…';
+  status.textContent = 'Rechne ab …';
 
   try {
     const res = await fetch('/api/charge-jar', {
@@ -3036,7 +3052,7 @@ function showOnboardStep(i) {
     mountConnectOnboarding('onboard-payout-connect', () => {
       onboardConnectStarted = true;
       nextBtn.disabled = false;
-      status.textContent = 'Angaben werden von Stripe geprüft.';
+      status.textContent = 'Angaben eingereicht — Prüfung durch Zahlungsdienstleister läuft.';
     }).catch(() => {
       status.textContent = 'Da ist leider etwas schiefgelaufen.';
     });
@@ -3148,7 +3164,7 @@ function showUserOnboardStep(i) {
     document.querySelector(`#s-user-onboard .onboard-dot[data-step="${s}"]`).classList.toggle('active', s === i);
   }
   document.getElementById('user-onboard-back').classList.toggle('hidden', i === 0);
-  document.getElementById('user-onboard-next').textContent = i === USER_ONBOARD_STEPS - 1 ? 'Speichern & weiter' : 'Weiter';
+  document.getElementById('user-onboard-next').textContent = i === USER_ONBOARD_STEPS - 1 ? 'Fertig' : 'Weiter';
 }
 
 async function saveUserOnboardCard() {
