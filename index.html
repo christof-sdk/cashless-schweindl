@@ -1454,9 +1454,6 @@
 <!-- Stripe.js -->
 <script src="https://js.stripe.com/v3/"></script>
 
-<!-- Stripe Connect embedded components (payout account onboarding) -->
-<script src="https://connect-js.stripe.com/v1.0/connect.js" async></script>
-
 <script>
 // ── SPLASH ────────────────────────────────────────────────────────────────────
 (function() {
@@ -2964,6 +2961,17 @@ async function resetJar() {
 // UX acceptance testing. Flip to true before go-live — nothing else needs to
 // change, both the real and the old simulated mockup paths stay maintained here.
 const USE_REAL_CONNECT_ONBOARDING = false;
+
+// Only load Connect.js (an extra render-independent network dependency, on top
+// of the 3 Firebase SDKs + Stripe.js every page load already waits on) while
+// the flag above is actually on — no point in every page load depending on
+// connect-js.stripe.com being fast/reachable for a flow nobody can enter yet.
+if (USE_REAL_CONNECT_ONBOARDING) {
+  const connectJsScript = document.createElement('script');
+  connectJsScript.src = 'https://connect-js.stripe.com/v1.0/connect.js';
+  connectJsScript.async = true;
+  document.head.appendChild(connectJsScript);
+}
 
 // Shared by Schwein-Onboarding step 2 and the Settings drawer's Auszahlungs-Konto
 // page — both just call mountConnectOnboarding() into their own container.
