@@ -44,9 +44,12 @@
 
        Each scheme can additionally have a light/dark VARIANT, chosen automatically
        per-device from prefers-color-scheme (see applyColorModeFromSystem() in the
-       script below) — independent of the jar-level scheme choice above. Only
-       Schema 2 has a dark variant so far (html[data-theme="2"][data-mode="dark"]),
-       as a first pass to review before rolling the same pattern out to 1/3/4. */
+       script below) — independent of the jar-level scheme choice above. Every
+       scheme has a dark variant (html[data-theme="N"][data-mode="dark"]); each
+       one only overrides tokens for surfaces that are actually light in that
+       scheme's base block above — anything already dark (e.g. dash-top/pay-bg,
+       and Schema 1's dashboard panel, which is dark purple even in light mode)
+       is deliberately left untouched. */
     html[data-theme="1"] {
       --c-bg-top: #ff6978;
       --c-pay-bg: #ff6978;
@@ -96,6 +99,27 @@
       --c-card-border: rgba(52,0,104,0.2);
       --c-pig-fill: #fffcf9;
       --c-pig-outline: rgba(255,252,249,0.2);
+    }
+
+    /* Schema 1, dark variant. Unlike Schema 2, this scheme's dashboard panel
+       (--c-bg-panel) is already dark purple in light mode, so it — and every
+       token that depends on it (panel-text, panel-secondary, jar-name, etc.) —
+       stays untouched here. Only the sheet surfaces (onboarding, Settings
+       drawer, forms) actually flip from cream to dark. */
+    html[data-theme="1"][data-mode="dark"] {
+      --c-sheet-bg: #340068;
+      --c-strong-text: #fffcf9;
+      --c-muted: rgba(255,252,249,0.6);
+      --c-dot-inactive: rgba(255,255,255,0.18);
+      --c-card-border: rgba(255,252,249,0.2);
+      --c-card-bg: #4a0091;
+      --c-input-border: rgba(255,255,255,0.15);
+      --c-card-wash: rgba(255,255,255,0.05);
+      --c-card-wash-active: rgba(255,255,255,0.09);
+      --c-divider: rgba(255,255,255,0.1);
+      --c-divider-strong: rgba(255,255,255,0.12);
+      --c-hover-wash: rgba(255,255,255,0.06);
+      --c-logo-text: #fffcf9;
     }
     html[data-theme="3"] {
       --c-bg-top: #1C3A5E;
@@ -147,6 +171,30 @@
       --c-pig-fill: #EEF3E3;
       --c-pig-outline: var(--c-bg-top);
     }
+
+    /* Schema 3, dark variant. bg-panel and sheet-bg are the same light cream
+       here (unlike Schema 1), so both — and their dependent text tokens —
+       flip together, same shape as Schema 2's dark block. */
+    html[data-theme="3"][data-mode="dark"] {
+      --c-bg-panel: #16293f;
+      --c-panel-text: #EEF3E3;
+      --c-panel-secondary: #a8b8a5;
+      --c-panel-text-muted: rgba(238,243,227,0.45);
+      --c-panel-text-muted-2: rgba(238,243,227,0.7);
+      --c-sheet-bg: #16293f;
+      --c-strong-text: #EEF3E3;
+      --c-muted: rgba(238,243,227,0.6);
+      --c-dot-inactive: rgba(255,255,255,0.18);
+      --c-card-border: rgba(238,243,227,0.2);
+      --c-card-bg: #1e3550;
+      --c-input-border: rgba(255,255,255,0.15);
+      --c-card-wash: rgba(255,255,255,0.05);
+      --c-card-wash-active: rgba(255,255,255,0.09);
+      --c-divider: rgba(255,255,255,0.1);
+      --c-divider-strong: rgba(255,255,255,0.12);
+      --c-hover-wash: rgba(255,255,255,0.06);
+      --c-logo-text: #EEF3E3;
+    }
     html[data-theme="4"] {
       --c-bg-top: #AECD45;
       --c-pay-bg: #AECD45;
@@ -196,6 +244,32 @@
       --c-card-border: rgba(28,58,94,0.2);
       --c-pig-fill: #1C3A5E;
       --c-pig-outline: rgba(232,240,248,0.2);
+    }
+
+    /* Schema 4, dark variant. bg-panel/sheet-bg flip from light blue-white to
+       this scheme's own dark navy (already its accent color in light mode) —
+       active-dot moves to the scheme's lime accent since the navy it used
+       against the (now also navy) sheet-bg would disappear. */
+    html[data-theme="4"][data-mode="dark"] {
+      --c-bg-panel: #1C3A5E;
+      --c-panel-text: #E8F0F8;
+      --c-panel-secondary: #8fa8bd;
+      --c-panel-text-muted: rgba(232,240,248,0.45);
+      --c-panel-text-muted-2: rgba(232,240,248,0.7);
+      --c-sheet-bg: #1C3A5E;
+      --c-strong-text: #E8F0F8;
+      --c-muted: rgba(232,240,248,0.6);
+      --c-active-dot: #AECD45;
+      --c-dot-inactive: rgba(255,255,255,0.18);
+      --c-card-border: rgba(232,240,248,0.2);
+      --c-card-bg: #28466a;
+      --c-input-border: rgba(255,255,255,0.15);
+      --c-card-wash: rgba(255,255,255,0.05);
+      --c-card-wash-active: rgba(255,255,255,0.09);
+      --c-divider: rgba(255,255,255,0.1);
+      --c-divider-strong: rgba(255,255,255,0.12);
+      --c-hover-wash: rgba(255,255,255,0.06);
+      --c-logo-text: #E8F0F8;
     }
     :root, html[data-theme="2"] {
       --c-bg-top: #1f2041;
