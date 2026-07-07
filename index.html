@@ -1112,15 +1112,12 @@
       padding: 64px 24px 140px;
       display: flex; flex-direction: column; gap: 16px;
     }
-    /* #welcome-body already provides the 24px side inset and its own 16px gap
-       between children — .drawer-check-list's/.drawer-static-text's own inset/
-       margin (meant for the unpadded .drawer-body they normally live in) would
-       double both up here. */
-    #welcome-body .drawer-check-list { margin: 0; padding: 0; }
+    /* #welcome-body already provides the 24px side inset — .drawer-static-text's
+       own inset (meant for the unpadded .drawer-body it normally lives in)
+       would double it up here. */
     #welcome-body .drawer-static-text { padding: 0; }
     /* Slightly larger than the shared 15px drawer-page default — this is the
        welcome screen's own hero copy, not a static info page. */
-    #welcome-body .drawer-check-list li,
     #welcome-body .drawer-static-text { font-size: 16px; }
   </style>
 </head>
@@ -1158,12 +1155,9 @@
     </svg>
   </div>
   <div id="welcome-body">
-    <ul class="drawer-check-list">
-      <li>Handy hinhalten, fertig – kein Bargeld, kein Login</li>
-      <li>Alle im Haushalt können jederzeit mitmachen</li>
-      <li>OGGY erinnert spielerisch daran, wenn länger nichts eingezahlt wurde</li>
-    </ul>
-    <p class="drawer-static-text">OGGY macht gemeinsames Sparen so einfach wie nie. Sparziel einrichten, hinstellen, lostappen – der Fortschritt ist direkt am Schweinchen sichtbar. Sparen als kleines Ritual, das sich gut anfühlt.</p>
+    <p class="drawer-static-text">OGGY macht gemeinsames Sparen so einfach wie nie.</p>
+    <p class="drawer-static-text">Sparziel einrichten, hinstellen, lostappen – der Fortschritt ist direkt am Schweinchen sichtbar.</p>
+    <p class="drawer-static-text">Sparen als kleines Ritual, das sich gut anfühlt.</p>
   </div>
   <div class="onboard-actions">
     <button type="button" class="onboard-next" id="welcome-cta"></button>
