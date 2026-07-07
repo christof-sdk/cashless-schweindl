@@ -1032,6 +1032,11 @@
       content: '✓'; position: absolute; left: 0; top: 0;
       color: var(--c-sheet-btn-bg); font-weight: 700;
     }
+    /* Plain-bullet variant — for a sequence of steps rather than a list of
+       features/benefits, where a checkmark ("already true") reads oddly. */
+    .drawer-check-list.plain-bullet li::before {
+      content: '•'; color: var(--c-strong-text);
+    }
 
     .faq-list { margin-top: 20px; border-top: 1px solid var(--c-divider); }
     .faq-item { border-bottom: 1px solid var(--c-divider); }
@@ -1112,12 +1117,15 @@
       padding: 64px 24px 140px;
       display: flex; flex-direction: column; gap: 16px;
     }
-    /* #welcome-body already provides the 24px side inset — .drawer-static-text's
-       own inset (meant for the unpadded .drawer-body it normally lives in)
-       would double it up here. */
+    /* #welcome-body already provides the 24px side inset and its own 16px gap
+       between children — .drawer-check-list's/.drawer-static-text's own inset/
+       margin (meant for the unpadded .drawer-body they normally live in) would
+       double both up here. */
+    #welcome-body .drawer-check-list { margin: 0; padding: 0; }
     #welcome-body .drawer-static-text { padding: 0; }
     /* Slightly larger than the shared 15px drawer-page default — this is the
        welcome screen's own hero copy, not a static info page. */
+    #welcome-body .drawer-check-list li,
     #welcome-body .drawer-static-text { font-size: 16px; }
   </style>
 </head>
@@ -1155,9 +1163,13 @@
     </svg>
   </div>
   <div id="welcome-body">
-    <p class="drawer-static-text">OGGY macht gemeinsames Sparen so einfach wie nie.</p>
-    <p class="drawer-static-text">Sparziel einrichten, hinstellen, lostappen – der Fortschritt ist direkt am Schweinchen sichtbar.</p>
-    <p class="drawer-static-text">Sparen als kleines Ritual, das sich gut anfühlt.</p>
+    <p class="drawer-static-text">OGGY macht gemeinsames Sparen so einfach wie nie:</p>
+    <ul class="drawer-check-list plain-bullet">
+      <li>Finde einen schönen Platz für OGGY in deiner Wohnung</li>
+      <li>Sparziel festlegen – Urlaub, neues Sofa, was auch immer</li>
+      <li>Handy hinhalten, einzahlen, fertig</li>
+    </ul>
+    <p class="drawer-static-text">Ganz ohne Bargeld – Sparen als kleines Ritual, das sich gut anfühlt.</p>
   </div>
   <div class="onboard-actions">
     <button type="button" class="onboard-next" id="welcome-cta"></button>
