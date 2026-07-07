@@ -1086,6 +1086,23 @@
     }
     .drawer-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* Global toast — unlike .drawer-toast (scoped inside the settings drawer,
+       single-line), this sits above every screen (dashboard, welcome, onboarding)
+       for longer, wrapped notices like the "Schweinchen zurückgesetzt" notice. */
+    .app-toast {
+      position: fixed; left: 50%; bottom: 32px; z-index: 200;
+      transform: translateX(-50%) translateY(8px);
+      width: min(320px, 85%);
+      background: rgba(20,20,20,0.9); color: #fff;
+      font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 400; line-height: 1.4;
+      padding: 14px 18px; border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      cursor: pointer;
+    }
+    .app-toast.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+
     /* ── WELCOME SCREEN ──────────────────────────────── */
     /* Shown only when onboarding is actually needed (Schwein and/or User) — replaces
        the old time-based splash. Sits above the other .screen elements (z-index 50 vs
@@ -1378,6 +1395,9 @@
     <button class="dialog-cancel-btn hidden" id="app-dialog-cancel-btn"></button>
   </div>
 </div>
+
+<!-- ── APP TOAST (global, non-blocking notice) ─────────────────────── -->
+<div class="app-toast" id="app-toast"></div>
 
 <!-- ── SETTINGS DRAWER ────────────────────────────── -->
 <div id="settings-drawer" class="drawer-overlay hidden">
@@ -2894,6 +2914,23 @@ function showDrawerToast(message) {
   drawerToastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
 }
 
+// Global, longer-lived toast for notices that matter regardless of which
+// screen is currently showing (e.g. "Schweinchen zurückgesetzt" — see
+// maybeShowResetNotice()). Tappable to dismiss early since the message is
+// longer than the quick single-line confirmations .drawer-toast handles.
+let appToastTimer = null;
+function showAppToast(message, duration = 7000) {
+  const toast = document.getElementById('app-toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(appToastTimer);
+  appToastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+  toast.onclick = () => {
+    clearTimeout(appToastTimer);
+    toast.classList.remove('show');
+  };
+}
+
 async function saveNameAndGoal() {
   const name = document.getElementById('settings-name').value.trim();
   const goalEnabled = document.getElementById('settings-goal-enabled').checked;
@@ -3126,7 +3163,19 @@ async function resetJar() {
   // anymore (the settingsAuth rule requires auth.uid === ownerUid). Harmless if this
   // fails (e.g. triggered via the password-unlock path rather than the owner device).
   await db.ref(`settingsAuth/${jarId}`).remove().catch(() => {});
-  await db.ref(`jars/${jarId}`).set({ onboarded: false });
+  // resetNotice lets other payers' devices show a reassuring toast the next time
+  // they load this jar (see maybeShowResetNotice()) instead of just silently
+  // landing back on the welcome screen. `by` is this (the owner's) device's own
+  // display name — resetJar() can only run on the owner device (withSettingsAuth).
+  const resetAt = Date.now();
+  await db.ref(`jars/${jarId}`).set({
+    onboarded: false,
+    resetNotice: { by: getDisplayName() || null, at: resetAt },
+  });
+  // Mark it as already "seen" from this device's own perspective — otherwise this
+  // same device's own live listener would show its owner a toast about their own
+  // action a moment later.
+  try { localStorage.setItem(`seenResetNotice:${jarId}`, String(resetAt)); } catch (e) {}
   closeDrawer();
 }
 
@@ -3443,6 +3492,25 @@ function showWelcome(kind, onStart) {
   welcome.classList.remove('hidden');
 }
 
+// Tells a returning payer (see visitedJar:{jarId}, set in renderApp()) that the
+// jar's owner reset it — otherwise they'd just silently land back on the welcome
+// screen with no idea why, wondering what happened to the money they put in.
+// A brand-new visitor to a freshly-reset jar has no visitedJar marker and never
+// sees this, since the notice would be meaningless without prior context.
+function maybeShowResetNotice(data) {
+  if (!data || !data.resetNotice || !data.resetNotice.at) return;
+  const { by, at } = data.resetNotice;
+  let visited = false, seenAt = 0;
+  try {
+    visited = localStorage.getItem(`visitedJar:${jarId}`) === '1';
+    seenAt = parseInt(localStorage.getItem(`seenResetNotice:${jarId}`) || '0', 10);
+  } catch (e) {}
+  if (!visited || at <= seenAt) return;
+  try { localStorage.setItem(`seenResetNotice:${jarId}`, String(at)); } catch (e) {}
+  const lead = by ? `${by} hat` : 'Der/die Besitzer:in hat';
+  showAppToast(`${lead} das Schweinchen zurückgesetzt. Keine Sorge, alle angesparten Beträge werden vollständig auf das angegebene Konto ausgezahlt.`);
+}
+
 let dashboardDataPromise;
 let appEnteredPromise;
 
@@ -3511,6 +3579,10 @@ function initDashboard() {
       applyColorScheme(data.colorScheme);
       document.getElementById('s-dash').classList.remove('hidden');
       maybeAutoCharge(data);
+      // Marks this device as a known payer of this specific jar — read by
+      // maybeShowResetNotice() to tell a returning payer from a brand-new
+      // visitor who has no prior context for a "the jar was reset" notice.
+      try { localStorage.setItem(`visitedJar:${jarId}`, '1'); } catch (e) {}
       if (resolveFirst) { resolveFirst(data); resolveFirst = null; }
       resolveAppEntered();
       if (!ownerGoalCheckDone) {
@@ -3541,6 +3613,7 @@ function initDashboard() {
     db.ref(`jars/${jarId}`).on('value', snap => {
       const data = snap.val();
       if (!data || !data.onboarded) {
+        maybeShowResetNotice(data);
         if (!schweinOnboardingStarted) {
           if (onboardingStarted) {
             startSchweinOnboarding();

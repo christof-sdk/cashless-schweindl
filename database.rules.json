@@ -21,6 +21,15 @@
         "goalReachedPending": { ".validate": "newData.isBoolean()" },
         "ownerUid": { ".validate": "!data.exists() && auth != null && newData.val() === auth.uid" },
 
+        "resetNotice": {
+          ".validate": "newData.hasChildren(['at'])",
+
+          "by": { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "at": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
+
+          "$other": { ".validate": false }
+        },
+
         "taps": {
           "$tapKey": {
             ".validate": "newData.hasChildren(['amount', 'timestamp', 'status'])",
