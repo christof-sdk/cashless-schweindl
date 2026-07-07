@@ -25,6 +25,7 @@
           ".validate": "newData.hasChildren(['at'])",
 
           "by": { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "byUid": { ".validate": "newData.isString() && newData.val().length <= 64" },
           "at": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
 
           "$other": { ".validate": false }
