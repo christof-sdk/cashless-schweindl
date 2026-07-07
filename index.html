@@ -3081,7 +3081,7 @@ function goToCardCapture() {
 }
 
 async function forgetCard() {
-  const confirmed = await appConfirm('Kreditkarte auf diesem Gerät vergessen? Beim nächsten Einzahlen wird erneut nach einer Kreditkarte gefragt.', { confirmText: 'Vergessen' });
+  const confirmed = await appConfirm('Willst du die Kreditkarte wirklich entfernen? Für neue Zahlungen muss erneut eine Karte hinterlegt werden.', { confirmText: 'Vergessen' });
   if (!confirmed) return;
   forgetPayerCard();
   renderAccountCardStatus();
@@ -3150,7 +3150,7 @@ async function maybeAutoCharge(jarSnapshot) {
 }
 
 async function resetJar() {
-  const confirmed = await appConfirm('Möchtest du das Schweinchen wirklich zurücksetzen? Alle Einzahlungen und Einstellungen werden gelöscht und das Onboarding startet neu.', { confirmText: 'Zurücksetzen', danger: true });
+  const confirmed = await appConfirm('Willst du das Schweinchen wirklich zurücksetzen? Keine Sorge, alle angesparten Beträge werden vollständig auf das angegebene Konto ausgezahlt.', { confirmText: 'Zurücksetzen', danger: true });
   if (!confirmed || DEMO_MODE) { closeDrawer(); return; }
 
   const snap = await db.ref(`jars/${jarId}`).once('value');
