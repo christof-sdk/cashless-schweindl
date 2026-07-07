@@ -92,6 +92,7 @@
       --c-card-border: rgba(52,0,104,0.2);
       --c-pig-fill: #fffcf9;
       --c-pig-outline: #340068;
+      --c-logo-text: #000;
     }
 
     /* Schema 1, dark variant. Unlike Schema 2, this scheme's dashboard panel
@@ -163,6 +164,7 @@
       --c-card-border: rgba(28,58,94,0.2);
       --c-pig-fill: #EEF3E3;
       --c-pig-outline: var(--c-bg-top);
+      --c-logo-text: #EEF3E3;
     }
 
     /* Schema 3, dark variant. bg-panel and sheet-bg are the same light cream
@@ -237,6 +239,7 @@
       --c-card-border: rgba(28,58,94,0.2);
       --c-pig-fill: #E8F0F8;
       --c-pig-outline: #1C3A5E;
+      --c-logo-text: #1C3A5E;
     }
 
     /* Schema 4, dark variant. bg-panel/sheet-bg flip from light blue-white to
@@ -313,6 +316,13 @@
       --c-card-border: rgba(31,32,65,0.2);
       --c-pig-fill: #fbffe3;
       --c-pig-outline: var(--c-bg-top);
+      /* Every theme block defines its own --c-logo-text (rather than relying on
+         the :root fallback) since :root here matches unconditionally — an
+         override added to only one theme's block would otherwise leak into
+         every other theme that doesn't redefine the property itself. This
+         scheme's dark navy --c-bg-top (where the wordmark now sits, see
+         Welcome Screen) needs a light value; #000 would be invisible. */
+      --c-logo-text: #fffcf9;
     }
 
     /* Schema 2, dark variant — chosen per-device (see applyColorModeFromSystem()),
@@ -1099,7 +1109,7 @@
     #welcome-tagline { font-family: 'Lato', sans-serif; font-weight: 400; font-size: 24px; line-height: 1.35; color: var(--c-ring-sub); margin: 0; }
     #welcome-body {
       flex: 1; min-height: 0; overflow-y: auto;
-      padding: 24px 24px 140px;
+      padding: 64px 24px 140px;
       display: flex; flex-direction: column; gap: 16px;
     }
     /* #welcome-body already provides the 24px side inset and its own 16px gap
@@ -1108,6 +1118,10 @@
        double both up here. */
     #welcome-body .drawer-check-list { margin: 0; padding: 0; }
     #welcome-body .drawer-static-text { padding: 0; }
+    /* Slightly larger than the shared 15px drawer-page default — this is the
+       welcome screen's own hero copy, not a static info page. */
+    #welcome-body .drawer-check-list li,
+    #welcome-body .drawer-static-text { font-size: 16px; }
   </style>
 </head>
 <body>
