@@ -2254,7 +2254,7 @@ async function doTap() {
       const snap = await ref.child('total').once('value');
       totalBefore = snap.val() || 0;
       totalAfter = totalBefore + tapAmount;
-      await ref.child('total').set(totalAfter);
+      await ref.update({ total: totalAfter, lastTapAt: tap.timestamp });
     } catch (e) {
       console.error('Firebase Fehler:', e);
     }
