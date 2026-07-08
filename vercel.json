@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/jar/:id", "destination": "/index.html" },
-    { "source": "/jar/:id/pay", "destination": "/index.html" }
+    { "source": "/jar/:id/pay", "destination": "/index.html" },
+    { "source": "/jars", "destination": "/index.html" }
   ]
 }

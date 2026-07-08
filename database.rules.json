@@ -4,6 +4,8 @@
     ".write": false,
 
     "jars": {
+      ".read": true,
+
       "$jarId": {
         ".read": true,
         ".write": true,
