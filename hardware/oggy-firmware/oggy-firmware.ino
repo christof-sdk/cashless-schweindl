@@ -24,14 +24,33 @@
 //   PIR VCC            -  3.3V (NICHT 5V - dadurch ist OUT garantiert 3.3V-sicher)
 //   DFPlayer VCC+Lautsprecher - eigene 5V/VIN-Schiene
 //
+// WLAN-ERSTEINRICHTUNG (Captive Portal, kein Web-App-Code involviert):
+// Der ESP32 hat kein WLAN, bevor er nicht konfiguriert ist - kann sich also
+// per Definition nicht selbst über die Web-App/Firebase konfigurieren lassen
+// (Henne-Ei-Problem). Stattdessen übernimmt die Library "WiFiManager" (tzapu)
+// das: findet sie keine gespeicherten Zugangsdaten (oder schlägt die
+// Verbindung fehl), spannt der ESP32 selbst einen WLAN-Access-Point
+// "OGGY-Setup" auf. Verbindet man sich damit (z.B. vom Handy), öffnet sich
+// automatisch eine vom ESP32 servierte Konfigurationsseite zur SSID/Passwort-
+// Eingabe. Nach erfolgreicher Verbindung speichert WiFiManager die Zugangs-
+// daten intern im Flash (NVS) - bei jedem weiteren Boot verbindet sich das
+// Gerät automatisch, ohne dass der Portal-Schritt erneut nötig ist.
+// Ein späteres Senden neuer WLAN-Daten AUS der Web-App heraus (z.B. bei
+// Netzwerkwechsel) ist damit bewusst nicht abgedeckt - das wäre ein
+// separates Feature (siehe Gesprächsnotiz), da es voraussetzt, dass der
+// ESP32 bereits online ist.
+//
 // LIBRARIES (Arduino IDE Library Manager):
+//   - WiFiManager (tzapu) - WLAN-Ersteinrichtung per Captive Portal
 //   - DFRobotDFPlayerMini
 //   - Adafruit SSD1306
 //   - Adafruit GFX Library (Abhängigkeit von SSD1306)
 //   (WiFi, WiFiClientSecure, HTTPClient, time.h sind Teil des ESP32-Boardpakets)
 //
 // Vor dem Kompilieren: config.example.h zu config.h kopieren und echte
-// WLAN-/Firebase-Werte eintragen (config.h ist in .gitignore).
+// Firebase-Werte eintragen (config.h ist in .gitignore). WLAN-Zugangsdaten
+// gehören NICHT mehr in config.h - die werden zur Laufzeit per Captive
+// Portal eingegeben und von WiFiManager selbst verwaltet.
 
 #if __has_include("config.h")
   #include "config.h"
@@ -40,6 +59,7 @@
 #endif
 
 #include <WiFi.h>
+#include <WiFiManager.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <time.h>
@@ -59,6 +79,11 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// ---- WLAN-Setup (Captive Portal) ----
+WiFiManager wifiManager;
+#define WIFI_SETUP_AP_NAME "OGGY-Setup"
+#define WIFI_SETUP_AP_PASSWORD "oggysetup" // min. 8 Zeichen fuer WPA2, bei Bedarf aendern
 
 // ---- DFPlayer ----
 HardwareSerial dfSerial(2);
@@ -169,6 +194,27 @@ void sleepDisplayIfIdle() {
   }
 }
 
+// Wird von WiFiManager aufgerufen, sobald es keine gespeicherten/gueltigen
+// WLAN-Zugangsdaten findet und den Setup-Access-Point startet - zeigt dem
+// Nutzer direkt am Geraet, was zu tun ist, statt dass er raten muss.
+void configModeCallback(WiFiManager *wm) {
+  display.ssd1306_command(SSD1306_DISPLAYON);
+  displayAwake = true;
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.println("WLAN-Einrichtung:");
+  display.println("");
+  display.println("Verbinde dich mit:");
+  display.println("WLAN: " WIFI_SETUP_AP_NAME);
+  display.println("Passwort: " WIFI_SETUP_AP_PASSWORD);
+  display.println("");
+  display.println("Seite oeffnet sich");
+  display.println("automatisch.");
+  display.display();
+}
+
 // ---- Reminder-Logik ----
 // Braucht echte Wanduhrzeit (NTP-synchronisiert in setup()), da lastTapAt ein
 // Unix-Timestamp aus Firebase ist und nicht gegen millis() (Laufzeit seit
@@ -217,13 +263,20 @@ void setup() {
     dfPlayer.volume(20); // 0-30
   }
 
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.print("Verbinde mit WLAN");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  // Verbindet mit den zuletzt gespeicherten WLAN-Zugangsdaten (NVS-Flash).
+  // Findet WiFiManager keine (oder schlaegt die Verbindung fehl), startet es
+  // automatisch den Setup-Access-Point und blockiert hier, bis der Nutzer
+  // sich per Handy verbunden und SSID/Passwort eingegeben hat - siehe
+  // configModeCallback() fuer die Display-Anzeige waehrend dieser Zeit.
+  wifiManager.setAPCallback(configModeCallback);
+  if (!wifiManager.autoConnect(WIFI_SETUP_AP_NAME, WIFI_SETUP_AP_PASSWORD)) {
+    // autoConnect() gibt nur bei einem konfigurierten Timeout false zurueck
+    // (hier keiner gesetzt) oder bei einem Fehler im Portal selbst - neu
+    // starten und von vorne versuchen ist die robusteste Reaktion.
+    Serial.println("WLAN-Setup fehlgeschlagen, Neustart...");
+    ESP.restart();
   }
-  Serial.println(" verbunden, IP: " + WiFi.localIP().toString());
+  Serial.println("WLAN verbunden, IP: " + WiFi.localIP().toString());
 
   // Fuer den Reminder-Zeitvergleich (checkReminder) noetig - reiner
   // Millisekunden-Vergleich, DST/Zeitzone spielt keine Rolle.

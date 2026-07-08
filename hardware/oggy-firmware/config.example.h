@@ -1,10 +1,11 @@
 // Kopiere diese Datei zu config.h und trage echte Werte ein.
 // config.h ist in .gitignore und wird nie eingecheckt.
+//
+// WLAN-SSID/Passwort gehoeren bewusst NICHT hierher - die werden zur
+// Laufzeit per Captive Portal (WiFiManager) eingegeben und intern im
+// Flash gespeichert, siehe oggy-firmware.ino.
 
 #pragma once
-
-#define WIFI_SSID     "dein-wlan-name"
-#define WIFI_PASSWORD "dein-wlan-passwort"
 
 // Firebase-Projekteinstellungen (Firebase Console -> Projekteinstellungen)
 #define FIREBASE_API_KEY   "AIzaSy..."
