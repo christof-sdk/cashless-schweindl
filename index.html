@@ -1160,6 +1160,17 @@
     #landing-wordmark { position: absolute; top: 0.8px; left: 0.8px; width: 179.2px; height: 71.3px; color: var(--c-ring-sub); }
     #landing-pig { position: absolute; top: 0; left: 0; width: 72.9px; height: 72.7px; }
     #landing-tagline { font-family: 'Lato', sans-serif; font-weight: 400; font-size: 24px; line-height: 1.35; color: var(--c-ring-sub); margin: 0; }
+    /* Same copy/layout as #welcome-body — see its comments above. */
+    #landing-body {
+      flex: 1; min-height: 0; overflow-y: auto;
+      width: min(284px, 80%); margin: 0 auto;
+      padding: 64px 0 140px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    #landing-body .drawer-check-list { margin: 0; padding: 0; }
+    #landing-body .drawer-static-text { padding: 0; }
+    #landing-body .drawer-check-list li,
+    #landing-body .drawer-static-text { font-size: 16px; }
 
     /* ── JARS DIRECTORY (debug/admin utility, intentionally unlinked) ───── */
     #s-jars-list { background: var(--c-sheet-bg); }
@@ -1171,7 +1182,8 @@
     #jars-list-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding-bottom: 100px; }
     .jars-list-message { font-family: 'Lato', sans-serif; font-size: 14px; color: var(--c-muted); padding: 12px 20px; }
     .jars-list-item {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      display: flex; align-items: center; justify-content: space-between; gap: 2px;
+      padding-right: 12px;
       border-bottom: 1px solid var(--c-divider);
     }
     .jars-list-item:active { background: var(--c-hover-wash); }
@@ -1182,13 +1194,18 @@
     }
     .jars-list-name { font-family: 'Lato', sans-serif; font-size: 16px; font-weight: 700; color: var(--c-strong-text); }
     .jars-list-id { font-family: 'Lato', sans-serif; font-size: 13px; color: var(--c-muted); }
+    .jars-list-copy,
     .jars-list-delete {
       flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-      width: 36px; height: 36px; margin-right: 12px; padding: 0;
+      width: 36px; height: 36px; padding: 0;
       background: none; border: none; border-radius: 50%;
-      color: #b35c4a; cursor: pointer;
+      cursor: pointer;
     }
+    .jars-list-copy { color: var(--c-strong-text); }
+    .jars-list-delete { color: #b35c4a; }
+    .jars-list-copy:active,
     .jars-list-delete:active { background: var(--c-hover-wash); }
+    .jars-list-copy svg,
     .jars-list-delete svg { width: 20px; height: 20px; }
   </style>
 </head>
@@ -1269,6 +1286,15 @@
     <svg viewBox="0 0 402 40" preserveAspectRatio="none" height="40" style="display:block;width:100%;flex-shrink:0">
       <path d="M0,40 Q201,0 402,40 L402,40 L0,40 Z" fill="var(--c-sheet-bg)"/>
     </svg>
+  </div>
+  <div id="landing-body">
+    <p class="drawer-static-text">OGGY macht gemeinsames Sparen so einfach wie nie:</p>
+    <ul class="drawer-check-list plain-bullet">
+      <li>Einen schönen Platz für OGGY in deiner Wohnung finden</li>
+      <li>Sparziel festlegen – Urlaub, neues Sofa, was auch immer</li>
+      <li>Handy hinhalten, einzahlen, fertig</li>
+    </ul>
+    <p class="drawer-static-text">Ganz ohne Bargeld – Sparen als kleines Ritual, das sich gut anfühlt.</p>
   </div>
   <div class="onboard-actions">
     <button type="button" class="onboard-back" id="landing-about-btn">Das ist Oggy</button>
@@ -3576,6 +3602,17 @@ function markOnboardingStarted() {
   try { sessionStorage.setItem(`onboardingStarted:${jarId}`, '1'); } catch (e) {}
 }
 
+// A CSS height:33% top strip almost never lands on a whole device pixel, so a
+// wave/arc SVG sitting right below it straddles a fractional row and blends a
+// faint seam between the dark top and the cream area below. Snapping the
+// strip's height to the nearest exact device pixel removes that boundary
+// entirely. Shared by #welcome-top, #landing-top — any screen with this same
+// dark-top-plus-wave layout.
+function snapTopWaveHeight(el) {
+  const dpr = window.devicePixelRatio || 1;
+  el.style.height = (Math.round(window.innerHeight / 3 * dpr) / dpr) + 'px';
+}
+
 function showWelcome(kind, onStart) {
   const welcome = document.getElementById('s-welcome');
   document.getElementById('welcome-cta').onclick = () => {
@@ -3589,13 +3626,7 @@ function showWelcome(kind, onStart) {
   document.getElementById('welcome-cta').textContent = kind === 'schwein' ? 'Schweinchen einrichten' : 'Benutzer anlegen';
   if (!welcomeWaveSnapped) {
     welcomeWaveSnapped = true;
-    // #welcome-top's CSS height:33% almost never lands on a whole device pixel, so
-    // the wave's anti-aliased curve straddles a fractional row and blends a faint
-    // seam between the dark top and the cream area below it. Snapping the height
-    // to the nearest exact device pixel removes the fractional boundary entirely.
-    const welcomeTop = document.getElementById('welcome-top');
-    const dpr = window.devicePixelRatio || 1;
-    welcomeTop.style.height = (Math.round(window.innerHeight / 3 * dpr) / dpr) + 'px';
+    snapTopWaveHeight(document.getElementById('welcome-top'));
   }
   welcome.classList.remove('hidden');
 }
@@ -3824,6 +3855,7 @@ function initLanding() {
   document.getElementById('settings-drawer').onclick = (e) => {
     if (e.target.id === 'settings-drawer') closeDrawer();
   };
+  snapTopWaveHeight(document.getElementById('landing-top'));
   document.getElementById('s-landing').classList.remove('hidden');
 }
 
@@ -3852,6 +3884,21 @@ async function authorizeJarsList() {
 const TRASH_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M4 7H20M9 7V5C9 4.44772 9.44772 4 10 4H14C14.5523 4 15 4.44772 15 5V7M18 7L17.3 19.1C17.2 20.1 16.4 20.9 15.4 20.9H8.6C7.6 20.9 6.8 20.1 6.7 19.1L6 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
+const COPY_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/>
+  <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+async function copyJarLink(id) {
+  const url = `${window.location.origin}/jar/${id}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    showAppToast('Link kopiert', 2000);
+  } catch (e) {
+    console.error('Link konnte nicht kopiert werden:', e);
+    await appAlert('Link konnte nicht kopiert werden.');
+  }
+}
 
 async function deleteJarFromList(id, name, rowEl) {
   const confirmed = await appConfirm(`Schweinchen "${name || id}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`, { confirmText: 'Löschen', danger: true });
@@ -3869,12 +3916,50 @@ async function deleteJarFromList(id, name, rowEl) {
   }
 }
 
+function buildJarRow(id, jar) {
+  const row = document.createElement('div');
+  row.className = 'jars-list-item';
+
+  const a = document.createElement('a');
+  a.className = 'jars-list-link';
+  a.href = `/jar/${id}`;
+  const name = document.createElement('span');
+  name.className = 'jars-list-name';
+  name.textContent = jar.name || '(ohne Namen)';
+  const idEl = document.createElement('span');
+  idEl.className = 'jars-list-id';
+  idEl.textContent = id;
+  a.append(name, idEl);
+
+  const copyBtn = document.createElement('button');
+  copyBtn.type = 'button';
+  copyBtn.className = 'jars-list-copy';
+  copyBtn.setAttribute('aria-label', 'Link kopieren');
+  copyBtn.innerHTML = COPY_SVG;
+  copyBtn.onclick = () => copyJarLink(id);
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.type = 'button';
+  deleteBtn.className = 'jars-list-delete';
+  deleteBtn.setAttribute('aria-label', 'Löschen');
+  deleteBtn.innerHTML = TRASH_SVG;
+  deleteBtn.onclick = () => deleteJarFromList(id, jar.name, row);
+
+  row.append(a, copyBtn, deleteBtn);
+  return row;
+}
+
+// Creates the jar and stays on /jars (prepending the new row) rather than
+// jumping to its onboarding — this is an admin list, not a single-jar flow.
 async function createNewJarFromList() {
   const bytes = crypto.getRandomValues(new Uint8Array(6));
   const newId = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
   try {
     await db.ref(`jars/${newId}`).set({ onboarded: false });
-    window.location.href = `/jar/${newId}`;
+    const body = document.getElementById('jars-list-body');
+    const emptyMsg = body.querySelector('.jars-list-message');
+    if (emptyMsg) emptyMsg.remove();
+    body.prepend(buildJarRow(newId, {}));
   } catch (e) {
     console.error('Neues Schweinchen konnte nicht angelegt werden:', e);
     await appAlert('Da ist leider etwas schiefgelaufen.');
@@ -3899,30 +3984,7 @@ async function initJarsList() {
     }
     body.innerHTML = '';
     ids.forEach(id => {
-      const jar = data[id] || {};
-      const row = document.createElement('div');
-      row.className = 'jars-list-item';
-
-      const a = document.createElement('a');
-      a.className = 'jars-list-link';
-      a.href = `/jar/${id}`;
-      const name = document.createElement('span');
-      name.className = 'jars-list-name';
-      name.textContent = jar.name || '(ohne Namen)';
-      const idEl = document.createElement('span');
-      idEl.className = 'jars-list-id';
-      idEl.textContent = id;
-      a.append(name, idEl);
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.type = 'button';
-      deleteBtn.className = 'jars-list-delete';
-      deleteBtn.setAttribute('aria-label', 'Löschen');
-      deleteBtn.innerHTML = TRASH_SVG;
-      deleteBtn.onclick = () => deleteJarFromList(id, jar.name, row);
-
-      row.append(a, deleteBtn);
-      body.appendChild(row);
+      body.appendChild(buildJarRow(id, data[id] || {}));
     });
   } catch (e) {
     console.error('Jars-Liste konnte nicht geladen werden:', e);
