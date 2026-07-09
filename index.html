@@ -1165,16 +1165,31 @@
     #s-jars-list { background: var(--c-sheet-bg); }
     #jars-list-header { padding: 24px 20px 8px; flex-shrink: 0; }
     #jars-list-title { font-family: 'Lato', sans-serif; font-weight: 700; font-size: 22px; color: var(--c-strong-text); margin: 0; }
-    #jars-list-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    /* padding-bottom reserves room for the floating add-jar button (same
+       fixed-bottom spot as .einzahlen-btn on the dashboard) so it never
+       covers the last row. */
+    #jars-list-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding-bottom: 100px; }
     .jars-list-message { font-family: 'Lato', sans-serif; font-size: 14px; color: var(--c-muted); padding: 12px 20px; }
     .jars-list-item {
-      display: flex; flex-direction: column; gap: 2px;
-      padding: 14px 20px; text-decoration: none;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
       border-bottom: 1px solid var(--c-divider);
     }
     .jars-list-item:active { background: var(--c-hover-wash); }
+    .jars-list-link {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column; gap: 2px;
+      padding: 14px 20px; text-decoration: none;
+    }
     .jars-list-name { font-family: 'Lato', sans-serif; font-size: 16px; font-weight: 700; color: var(--c-strong-text); }
     .jars-list-id { font-family: 'Lato', sans-serif; font-size: 13px; color: var(--c-muted); }
+    .jars-list-delete {
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; margin-right: 12px; padding: 0;
+      background: none; border: none; border-radius: 50%;
+      color: #b35c4a; cursor: pointer;
+    }
+    .jars-list-delete:active { background: var(--c-hover-wash); }
+    .jars-list-delete svg { width: 20px; height: 20px; }
   </style>
 </head>
 <body>
@@ -1267,6 +1282,11 @@
     <h2 id="jars-list-title">Alle Schweinchen</h2>
   </div>
   <div id="jars-list-body"></div>
+  <button class="einzahlen-btn" id="jars-list-add-btn" aria-label="Neues Schweinchen anlegen">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  </button>
 </div>
 
 <!-- ── DASHBOARD ──────────────────────────────────── -->
@@ -2456,8 +2476,10 @@ async function resolveGoalReachedPending() {
 // bottom-sheet look as the goal-reached celebration, so destructive/blocking
 // decisions don't suddenly drop into an unstyled OS dialog. All three variants
 // share one overlay+sheet; resolve() only ever fires once per open() call.
+let appDialogGeneration = 0;
 function showAppDialog({ message, confirmText = 'OK', cancelText = null, danger = false, inputType = null, inputPlaceholder = '' }) {
   return new Promise((resolve) => {
+    const myGeneration = ++appDialogGeneration;
     const overlay = document.getElementById('app-dialog-overlay');
     const messageEl = document.getElementById('app-dialog-message');
     const inputWrap = document.getElementById('app-dialog-input-wrap');
@@ -2481,9 +2503,17 @@ function showAppDialog({ message, confirmText = 'OK', cancelText = null, danger 
       settled = true;
       overlay.classList.remove('show');
       // Guard against a fast back-to-back dialog (e.g. a prompt immediately
-      // followed by an error alert) — without this check, this stale timeout
-      // would hide the *next* dialog if it opened within the same 300ms.
-      setTimeout(() => { if (!overlay.classList.contains('show')) overlay.classList.add('hidden'); }, 300);
+      // followed by an error alert): checking only the 'show' class isn't
+      // enough — if the next dialog's opening rAF hasn't landed yet (e.g. a
+      // backgrounded tab throttling rAF), 'show' is briefly absent on the
+      // *new* dialog too, and this timeout would wrongly re-hide it. The
+      // generation counter identifies whether *this* close() is still the
+      // most recent one before acting.
+      setTimeout(() => {
+        if (appDialogGeneration === myGeneration && !overlay.classList.contains('show')) {
+          overlay.classList.add('hidden');
+        }
+      }, 300);
       confirmBtn.onclick = null;
       cancelBtn.onclick = null;
       overlay.onclick = null;
@@ -3799,8 +3829,64 @@ function initLanding() {
 
 // /jars — a plain directory of every jar (id + name), intentionally not linked
 // from anywhere in the app itself; reachable only if you already know the URL.
+// The password below is a deliberately simple deterrent, not real access control
+// (it's a plain string sitting in client-side source) — consistent with the rest
+// of this page's "unlinked, not hardened" posture. Cached per tab session so a
+// reload during the same visit doesn't re-prompt.
+const JARS_LIST_PASSWORD = 'swine81';
+
+async function authorizeJarsList() {
+  try {
+    if (sessionStorage.getItem('jarsListAuthed') === '1') return true;
+  } catch (e) {}
+  const password = await appPrompt('Passwort für die Jars-Übersicht eingeben:', { inputType: 'password', inputPlaceholder: 'Passwort' });
+  if (password !== JARS_LIST_PASSWORD) {
+    if (password !== null) await appAlert('Falsches Passwort.');
+    window.location.href = '/';
+    return false;
+  }
+  try { sessionStorage.setItem('jarsListAuthed', '1'); } catch (e) {}
+  return true;
+}
+
+const TRASH_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 7H20M9 7V5C9 4.44772 9.44772 4 10 4H14C14.5523 4 15 4.44772 15 5V7M18 7L17.3 19.1C17.2 20.1 16.4 20.9 15.4 20.9H8.6C7.6 20.9 6.8 20.1 6.7 19.1L6 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+async function deleteJarFromList(id, name, rowEl) {
+  const confirmed = await appConfirm(`Schweinchen "${name || id}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`, { confirmText: 'Löschen', danger: true });
+  if (!confirmed) return;
+  try {
+    await db.ref(`jars/${id}`).remove();
+    await db.ref(`settingsAuth/${id}`).remove().catch(() => {});
+    rowEl.remove();
+    if (!document.querySelector('#jars-list-body .jars-list-item')) {
+      document.getElementById('jars-list-body').innerHTML = '<p class="jars-list-message">Noch keine Schweinchen angelegt.</p>';
+    }
+  } catch (e) {
+    console.error('Schweinchen konnte nicht gelöscht werden:', e);
+    await appAlert('Da ist leider etwas schiefgelaufen.');
+  }
+}
+
+async function createNewJarFromList() {
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  const newId = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  try {
+    await db.ref(`jars/${newId}`).set({ onboarded: false });
+    window.location.href = `/jar/${newId}`;
+  } catch (e) {
+    console.error('Neues Schweinchen konnte nicht angelegt werden:', e);
+    await appAlert('Da ist leider etwas schiefgelaufen.');
+  }
+}
+
 async function initJarsList() {
+  const authorized = await authorizeJarsList();
+  if (!authorized) return;
+
   document.getElementById('s-jars-list').classList.remove('hidden');
+  document.getElementById('jars-list-add-btn').onclick = createNewJarFromList;
   const body = document.getElementById('jars-list-body');
   body.innerHTML = '<p class="jars-list-message">Lädt …</p>';
   try {
@@ -3814,8 +3900,11 @@ async function initJarsList() {
     body.innerHTML = '';
     ids.forEach(id => {
       const jar = data[id] || {};
+      const row = document.createElement('div');
+      row.className = 'jars-list-item';
+
       const a = document.createElement('a');
-      a.className = 'jars-list-item';
+      a.className = 'jars-list-link';
       a.href = `/jar/${id}`;
       const name = document.createElement('span');
       name.className = 'jars-list-name';
@@ -3824,7 +3913,16 @@ async function initJarsList() {
       idEl.className = 'jars-list-id';
       idEl.textContent = id;
       a.append(name, idEl);
-      body.appendChild(a);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'jars-list-delete';
+      deleteBtn.setAttribute('aria-label', 'Löschen');
+      deleteBtn.innerHTML = TRASH_SVG;
+      deleteBtn.onclick = () => deleteJarFromList(id, jar.name, row);
+
+      row.append(a, deleteBtn);
+      body.appendChild(row);
     });
   } catch (e) {
     console.error('Jars-Liste konnte nicht geladen werden:', e);
